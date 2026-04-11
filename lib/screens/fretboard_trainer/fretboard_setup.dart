@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../services/practice_record.dart';
+import '../../services/pitch_detector.dart';
 
 /// Continuous "Play X" note finder - no start button, runs immediately
+/// Now with microphone support + Auto mode.
 class FretboardSetup extends StatefulWidget {
   const FretboardSetup({super.key});
 
@@ -36,8 +38,15 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
 
   // Auto-reveal answer settings
   bool _autoRevealAnswer = false;
-  int _autoRevealDelay = 2; // seconds
+  int _autoRevealDelay = 2;
   Timer? _autoRevealTimer;
+
+  // ── Microphone / Auto mode ──
+  final PitchDetector _pitchDetector = PitchDetector();
+  bool _micEnabled = false;
+  bool _autoMode = false;
+  double _detectedFrequency = 0;
+  String _detectedNote = '';
 
   // Animation
   late AnimationController _fadeController;
@@ -49,6 +58,51 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     _fadeController = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
     _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut);
     _stopwatch.start();
+
+    _pitchDetector.onPitchDetected = (freq, noteName, cents) {
+      if (!mounted || _showAnswer) return;
+      setState(() {
+        _detectedFrequency = freq;
+        _detectedNote = noteName;
+      });
+
+      if (_micEnabled && !_showAnswer) {
+        // Check if detected frequency matches the target note on the current string
+        // A/B matching: any fret that produces the same note name is accepted
+        bool matched = false;
+        for (final fret in _correctFrets) {
+          if (PitchDetector.isFrequencyMatch(
+            freq,
+            _currentString,
+            fret,
+            centsTolerance: 50,
+          )) {
+            matched = true;
+            break;
+          }
+        }
+
+        // Also accept generic note name match (any octave)
+        if (!matched) {
+          matched = PitchDetector.isNoteNameMatch(freq, _currentNote, centsTolerance: 50);
+        }
+
+        if (matched) {
+          _score++;
+          _total++;
+          HapticFeedback.mediumImpact();
+          if (_autoMode) {
+            _nextNote();
+          } else {
+            setState(() => _showAnswer = true);
+            Future.delayed(const Duration(seconds: 1), () {
+              if (mounted) _nextNote();
+            });
+          }
+        }
+      }
+    };
+
     _nextNote();
   }
 
@@ -65,6 +119,8 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     _timeLeft = _seconds.toInt();
     _showAnswer = false;
     _autoRevealTimer?.cancel();
+    _detectedFrequency = 0;
+    _detectedNote = '';
 
     _fadeController.forward(from: 0);
 
@@ -90,7 +146,6 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
       });
     });
 
-    // Play sound if enabled
     if (_soundEnabled) {
       HapticFeedback.lightImpact();
     }
@@ -104,13 +159,34 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     if (_correctFrets.contains(fret)) {
       _score++;
       HapticFeedback.mediumImpact();
-      _nextNote(); // auto-advance on correct
+      _nextNote();
     } else {
       setState(() => _showAnswer = true);
-      // Show answer briefly then move on
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) _nextNote();
       });
+    }
+  }
+
+  Future<void> _toggleMic() async {
+    if (_micEnabled) {
+      await _pitchDetector.stopListening();
+      setState(() {
+        _micEnabled = false;
+        _detectedFrequency = 0;
+        _detectedNote = '';
+      });
+    } else {
+      final ok = await _pitchDetector.startListening();
+      if (ok) {
+        setState(() => _micEnabled = true);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission required')),
+          );
+        }
+      }
     }
   }
 
@@ -121,6 +197,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
   Future<void> _saveAndExit() async {
     _stopwatch.stop();
     _timer?.cancel();
+    await _pitchDetector.stopListening();
     await PracticeRecord.saveSession(PracticeSession(
       type: 'fretboard',
       timestamp: DateTime.now(),
@@ -148,6 +225,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     _timer?.cancel();
     _autoRevealTimer?.cancel();
     _fadeController.dispose();
+    _pitchDetector.dispose();
     super.dispose();
   }
 
@@ -158,9 +236,31 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Note Finder 🎵'),
+        title: const Text('Note Finder'),
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
+          // Mic toggle
+          IconButton(
+            icon: Icon(
+              _micEnabled ? Icons.mic : Icons.mic_off,
+              color: _micEnabled ? Colors.purple[300] : null,
+            ),
+            onPressed: _toggleMic,
+            tooltip: _micEnabled ? 'Disable mic' : 'Enable mic',
+          ),
+          // Auto toggle (visible when mic is on)
+          if (_micEnabled)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Auto', style: TextStyle(fontSize: 12)),
+                Switch(
+                  value: _autoMode,
+                  onChanged: (v) => setState(() => _autoMode = v),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
           // Score display
           Center(child: Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -183,6 +283,37 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
             minHeight: 6,
           ),
 
+          // Mic status bar
+          if (_micEnabled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: Colors.purple.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Icon(Icons.mic, size: 16, color: Colors.purple[400]),
+                  const SizedBox(width: 6),
+                  if (_detectedFrequency > 0)
+                    Text(
+                      '$_detectedNote  ${_detectedFrequency.toStringAsFixed(0)}Hz',
+                      style: TextStyle(fontSize: 13, color: Colors.purple[600]),
+                    )
+                  else
+                    Text('Play the note...', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                  if (_autoMode) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('AUTO', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
           // Main content: Play X card
           Expanded(
             flex: 3,
@@ -192,7 +323,6 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // String indicator
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
@@ -205,25 +335,30 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // "Play X" big text
                     Text('Play', style: TextStyle(fontSize: 28, color: Colors.grey[500])),
                     Text(
                       _currentNote,
                       style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Color(0xFF4A90D9), height: 1.1),
                     ),
                     const SizedBox(height: 4),
-                    // Timer countdown
                     Text(
                       '${_timeLeft}s',
                       style: TextStyle(fontSize: 24, color: _timeLeft > 2 ? Colors.grey[400] : Colors.red, fontWeight: FontWeight.w500),
                     ),
-                    // Answer feedback
                     if (_showAnswer)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           'Fret ${_correctFrets.join(", ")}',
                           style: TextStyle(fontSize: 20, color: Colors.green[600], fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    if (_micEnabled)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Tap a fret OR play the note on guitar',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
                         ),
                       ),
                   ],
@@ -289,22 +424,18 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                     children: [
                       const Icon(Icons.timer, size: 18),
                       const SizedBox(width: 6),
-                      // - button
                       _stepBtn(Icons.remove, () {
                         if (_seconds > 1) setState(() => _seconds--);
                       }),
-                      // Current value
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text('${_seconds.toInt()}s',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
-                      // + button
                       _stepBtn(Icons.add, () {
                         if (_seconds < 60) setState(() => _seconds++);
                       }),
                       const SizedBox(width: 8),
-                      // Preset chips
                       ...[3, 5, 8, 10, 15].map((s) => Padding(
                         padding: const EdgeInsets.only(right: 4),
                         child: GestureDetector(

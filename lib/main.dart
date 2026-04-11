@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/tutorial/tutorial_screen.dart';
 import 'services/app_localizations.dart';
 
 void main() {
@@ -75,7 +76,7 @@ class GuitarTeacherAppState extends State<GuitarTeacherApp> {
       theme: _lightTheme,
       darkTheme: _darkTheme,
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: const RateAppWrapper(child: HomeScreen()),
+      home: const _FirstLaunchWrapper(child: RateAppWrapper(child: HomeScreen())),
     );
   }
 }
@@ -132,4 +133,40 @@ class RateAppWrapper extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// Shows tutorial on first launch via SharedPreferences check.
+class _FirstLaunchWrapper extends StatefulWidget {
+  final Widget child;
+  const _FirstLaunchWrapper({required this.child});
+
+  @override
+  State<_FirstLaunchWrapper> createState() => _FirstLaunchWrapperState();
+}
+
+class _FirstLaunchWrapperState extends State<_FirstLaunchWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final shouldShow = await TutorialScreen.shouldShowOnFirstLaunch();
+    if (shouldShow && mounted) {
+      // Small delay so the home screen renders first
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const TutorialScreen(isFirstLaunch: true),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

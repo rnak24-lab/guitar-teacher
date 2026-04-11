@@ -8,6 +8,7 @@ import 'tuner/tuner_screen.dart';
 import 'metronome/metronome_screen.dart';
 import 'practice_stats/practice_stats_screen.dart';
 import 'settings/settings_screen.dart';
+import 'tutorial/tutorial_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,6 +22,12 @@ class HomeScreen extends StatelessWidget {
         title: Text('${tr('app_title')} 🎸', style: const TextStyle(fontSize: 22)),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Tutorial',
+            onPressed: () => Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const TutorialScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => Navigator.push(

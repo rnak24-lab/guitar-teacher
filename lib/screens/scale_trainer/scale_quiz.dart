@@ -5,8 +5,10 @@ import '../../models/scale.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../services/practice_record.dart';
+import '../../services/pitch_detector.dart';
 
 /// Quiz Mode: Random scale quiz - identify/play scale notes
+/// Now supports microphone input: play the note on guitar instead of tapping fret buttons.
 class ScaleQuiz extends StatefulWidget {
   final String rootNote;
   final String scaleName;
@@ -41,19 +43,82 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   int? _selectedFret;
   final Stopwatch _stopwatch = Stopwatch();
 
+  // ── Microphone / Auto mode ──
+  final PitchDetector _pitchDetector = PitchDetector();
+  bool _micEnabled = false;
+  bool _autoMode = false;
+  double _detectedFrequency = 0;
+  String _detectedNote = '';
+
   @override
   void initState() {
     super.initState();
     _scale = ScaleData.byName(widget.scaleName);
     _scaleNotes = _scale.notesForRoot(widget.rootNote);
     _stopwatch.start();
+
+    _pitchDetector.onPitchDetected = (freq, noteName, cents) {
+      if (!mounted || _answered) return;
+      setState(() {
+        _detectedFrequency = freq;
+        _detectedNote = noteName;
+      });
+
+      // Check if detected note matches any correct fret's note
+      // Using A/B frequency matching: same note name on any octave is accepted
+      if (_micEnabled && !_answered) {
+        // The question asks for _questionNote on String _questionString
+        // Check if the played frequency matches the note at any correct fret
+        bool matched = false;
+        for (final fret in _correctFrets) {
+          if (PitchDetector.isFrequencyMatch(
+            freq,
+            _questionString,
+            fret,
+            centsTolerance: 50,
+            maxFret: widget.endFret,
+          )) {
+            matched = true;
+            break;
+          }
+        }
+
+        // Also accept: same note name match (any string/octave)
+        if (!matched) {
+          matched = PitchDetector.isNoteNameMatch(freq, _questionNote, centsTolerance: 50);
+        }
+
+        if (matched) {
+          _handleCorrectMicAnswer();
+        }
+      }
+    };
+
     _nextQuestion();
   }
 
+  @override
+  void dispose() {
+    _pitchDetector.dispose();
+    super.dispose();
+  }
+
+  void _handleCorrectMicAnswer() {
+    if (_answered) return;
+    _answered = true;
+    _correctAnswers++;
+    _totalQuestions++;
+    setState(() {});
+
+    if (_autoMode) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) _nextQuestion();
+      });
+    }
+  }
+
   void _nextQuestion() {
-    // Pick a random note from the scale
     _questionNote = _scaleNotes[_random.nextInt(_scaleNotes.length)];
-    // Pick a random string
     _questionString = _random.nextInt(6) + 1;
     final gs = GuitarString.standard.firstWhere((s) => s.number == _questionString);
     _correctFrets = [];
@@ -62,7 +127,6 @@ class _ScaleQuizState extends State<ScaleQuiz> {
         _correctFrets.add(f);
       }
     }
-    // If no valid frets, pick another question
     if (_correctFrets.isEmpty) {
       _nextQuestion();
       return;
@@ -70,7 +134,9 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     _selectedFret = null;
     _showAnswer = false;
     _answered = false;
-    _totalQuestions++;
+    _detectedFrequency = 0;
+    _detectedNote = '';
+    if (!_micEnabled) _totalQuestions++;
     setState(() {});
   }
 
@@ -81,6 +147,11 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     if (_correctFrets.contains(fret)) {
       _correctAnswers++;
     }
+    if (_micEnabled && _autoMode && _correctFrets.contains(fret)) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) _nextQuestion();
+      });
+    }
     setState(() {});
   }
 
@@ -88,8 +159,31 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     setState(() => _showAnswer = !_showAnswer);
   }
 
+  Future<void> _toggleMic() async {
+    if (_micEnabled) {
+      await _pitchDetector.stopListening();
+      setState(() {
+        _micEnabled = false;
+        _detectedFrequency = 0;
+        _detectedNote = '';
+      });
+    } else {
+      final ok = await _pitchDetector.startListening();
+      if (ok) {
+        setState(() => _micEnabled = true);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission required')),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _endQuiz() async {
     _stopwatch.stop();
+    await _pitchDetector.stopListening();
     await PracticeRecord.saveSession(PracticeSession(
       type: 'scale',
       timestamp: DateTime.now(),
@@ -101,7 +195,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Quiz Complete! 🎸'),
+          title: const Text('Quiz Complete!'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -139,12 +233,29 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isCorrect = _answered && _correctFrets.contains(_selectedFret);
+    final isCorrect = _answered && (_correctFrets.contains(_selectedFret) ||
+        (_micEnabled && _correctAnswers > 0 && _selectedFret == null));
+
+    // For mic-only correct answers
+    final isMicCorrect = _answered && _selectedFret == null && _micEnabled;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Scale Quiz: ${widget.rootNote} ${widget.scaleName}'),
         actions: [
+          // Auto toggle
+          if (_micEnabled)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Auto', style: TextStyle(fontSize: 12)),
+                Switch(
+                  value: _autoMode,
+                  onChanged: (v) => setState(() => _autoMode = v),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
           TextButton(
             onPressed: _endQuiz,
             child: const Text('End', style: TextStyle(color: Colors.white, fontSize: 16)),
@@ -161,11 +272,55 @@ class _ScaleQuizState extends State<ScaleQuiz> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Q$_totalQuestions', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('✅ $_correctAnswers / $_totalQuestions',
-                  style: TextStyle(fontSize: 16, color: Colors.green[700])),
+                Row(
+                  children: [
+                    // Mic toggle button
+                    IconButton(
+                      icon: Icon(
+                        _micEnabled ? Icons.mic : Icons.mic_off,
+                        color: _micEnabled ? Colors.purple : Colors.grey,
+                      ),
+                      onPressed: _toggleMic,
+                      tooltip: _micEnabled ? 'Disable microphone' : 'Enable microphone',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('$_correctAnswers / $_totalQuestions',
+                      style: TextStyle(fontSize: 16, color: Colors.green[700])),
+                  ],
+                ),
               ],
             ),
           ),
+
+          // Mic status bar
+          if (_micEnabled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: isMicCorrect
+                  ? Colors.green.withValues(alpha: 0.15)
+                  : Colors.purple.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Icon(Icons.mic, size: 16, color: Colors.purple[400]),
+                  const SizedBox(width: 6),
+                  if (_detectedFrequency > 0)
+                    Text(
+                      '$_detectedNote  ${_detectedFrequency.toStringAsFixed(0)}Hz',
+                      style: TextStyle(fontSize: 13, color: Colors.purple[600]),
+                    )
+                  else
+                    Text('Play the note on your guitar...', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                  if (_autoMode) ...[
+                    const Spacer(),
+                    const Text('AUTO', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                  ],
+                ],
+              ),
+            ),
+
           // Question
           Padding(
             padding: const EdgeInsets.all(20),
@@ -174,9 +329,20 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                 Text('Where is', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
                 const SizedBox(height: 4),
                 Text(_questionNote,
-                  style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Color(0xFF8B6914))),
+                  style: TextStyle(
+                    fontSize: 64, fontWeight: FontWeight.bold,
+                    color: isMicCorrect ? Colors.green : const Color(0xFF8B6914),
+                  )),
                 Text('on String $_questionString?',
                   style: TextStyle(fontSize: 20, color: isDark ? Colors.grey[300] : Colors.brown[600])),
+                if (_micEnabled)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Tap a fret OR play the note',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -199,7 +365,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
 
                   Color bgColor;
                   if (_answered) {
-                    if (isCorrectFret && (_showAnswer || isSelected)) {
+                    if (isCorrectFret && (_showAnswer || isSelected || isMicCorrect)) {
                       bgColor = Colors.green;
                     } else if (isSelected && !isCorrectFret) {
                       bgColor = Colors.red;
@@ -222,7 +388,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: (_answered && (isCorrectFret && (_showAnswer || isSelected)) || (isSelected && !isCorrectFret))
+                            color: (_answered && (isCorrectFret && (_showAnswer || isSelected || isMicCorrect)) || (isSelected && !isCorrectFret))
                                 ? Colors.white
                                 : isDark ? Colors.white : Colors.brown[800],
                           ),
@@ -239,7 +405,6 @@ class _ScaleQuizState extends State<ScaleQuiz> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // ? help / show answer button
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _toggleShowAnswer,
@@ -274,13 +439,15 @@ class _ScaleQuizState extends State<ScaleQuiz> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
-              color: isCorrect ? Colors.green[100] : Colors.red[100],
+              color: (isCorrect || isMicCorrect) ? Colors.green[100] : Colors.red[100],
               child: Text(
-                isCorrect ? '✅ Correct!' : '❌ Wrong! Correct frets: ${_correctFrets.join(", ")}',
+                (isCorrect || isMicCorrect)
+                    ? 'Correct!${_micEnabled && isMicCorrect ? " (Mic)" : ""}'
+                    : 'Wrong! Correct frets: ${_correctFrets.join(", ")}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.bold,
-                  color: isCorrect ? Colors.green[800] : Colors.red[800],
+                  color: (isCorrect || isMicCorrect) ? Colors.green[800] : Colors.red[800],
                 ),
               ),
             ),

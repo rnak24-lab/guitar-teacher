@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../models/scale.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
+import '../../services/pitch_detector.dart';
 
 /// Practice Mode: Shows scale notes highlighted on fretboard
+/// Now with microphone support — play the correct note to advance.
 class ScalePractice extends StatefulWidget {
   final String rootNote;
   final String scaleName;
@@ -29,21 +32,149 @@ class _ScalePracticeState extends State<ScalePractice> {
   final bool _highlightRoot = true;
   int _currentNoteIndex = -1; // -1 = show all
 
+  // ── Microphone / Auto mode ──
+  final PitchDetector _pitchDetector = PitchDetector();
+  bool _micEnabled = false;
+  bool _autoMode = false;
+  double _detectedFrequency = 0;
+  String _detectedNote = '';
+  bool _noteMatched = false;
+
   @override
   void initState() {
     super.initState();
     _scale = ScaleData.byName(widget.scaleName);
     _scaleNotes = _scale.notesForRoot(widget.rootNote);
+
+    _pitchDetector.onPitchDetected = (freq, noteName, cents) {
+      if (!mounted) return;
+      setState(() {
+        _detectedFrequency = freq;
+        _detectedNote = noteName;
+      });
+
+      // Check if detected note matches current target
+      if (_currentNoteIndex >= 0 && _currentNoteIndex < _scaleNotes.length) {
+        final targetNote = _scaleNotes[_currentNoteIndex];
+        if (PitchDetector.isNoteNameMatch(freq, targetNote, centsTolerance: 50)) {
+          if (!_noteMatched) {
+            setState(() => _noteMatched = true);
+            if (_autoMode) {
+              // Auto advance after brief visual feedback
+              Future.delayed(const Duration(milliseconds: 400), () {
+                if (mounted && _autoMode) {
+                  _advanceNote();
+                }
+              });
+            }
+          }
+        } else {
+          if (mounted) setState(() => _noteMatched = false);
+        }
+      }
+    };
+  }
+
+  @override
+  void dispose() {
+    _pitchDetector.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleMic() async {
+    if (_micEnabled) {
+      await _pitchDetector.stopListening();
+      setState(() {
+        _micEnabled = false;
+        _detectedFrequency = 0;
+        _detectedNote = '';
+        _noteMatched = false;
+      });
+    } else {
+      final ok = await _pitchDetector.startListening();
+      if (ok) {
+        setState(() => _micEnabled = true);
+        // If showing all notes, start from first note when mic is on
+        if (_currentNoteIndex == -1) {
+          setState(() => _currentNoteIndex = 0);
+        }
+      } else {
+        if (mounted) {
+          final isPermanent = await PitchDetector.isPermissionPermanentlyDenied();
+          if (!mounted) return;
+          if (isPermanent) {
+            _showPermissionDialog();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Microphone permission required')),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Microphone Permission'),
+        content: const Text(
+          'Microphone access is needed for pitch detection.\n'
+          'Please enable it in your device settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _advanceNote() {
+    setState(() {
+      _noteMatched = false;
+      if (_currentNoteIndex >= _scaleNotes.length - 1) {
+        _currentNoteIndex = 0;
+      } else {
+        _currentNoteIndex++;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentTarget = _currentNoteIndex >= 0 && _currentNoteIndex < _scaleNotes.length
+        ? _scaleNotes[_currentNoteIndex]
+        : null;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.rootNote} ${widget.scaleName}'),
         actions: [
+          // Auto mode toggle
+          if (_micEnabled)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Auto', style: TextStyle(fontSize: 12)),
+                Switch(
+                  value: _autoMode,
+                  onChanged: (v) => setState(() => _autoMode = v),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
           IconButton(
             icon: Icon(_showNoteNames ? Icons.abc : Icons.music_note),
             tooltip: _showNoteNames ? 'Hide note names' : 'Show note names',
@@ -53,6 +184,52 @@ class _ScalePracticeState extends State<ScalePractice> {
       ),
       body: Column(
         children: [
+          // Mic status bar
+          if (_micEnabled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              color: _noteMatched
+                  ? Colors.green.withValues(alpha: 0.15)
+                  : Colors.purple.withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  Icon(
+                    _noteMatched ? Icons.check_circle : Icons.mic,
+                    color: _noteMatched ? Colors.green : Colors.purple,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  if (_detectedFrequency > 0) ...[
+                    Text(
+                      '$_detectedNote  ${_detectedFrequency.toStringAsFixed(1)}Hz',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _noteMatched ? Colors.green[700] : Colors.purple[700],
+                      ),
+                    ),
+                    const Spacer(),
+                    if (currentTarget != null)
+                      Text(
+                        'Target: $currentTarget',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                  ] else
+                    Text('Listening...', style: TextStyle(color: Colors.grey[600])),
+                  if (_autoMode) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('AUTO', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
           // Scale notes display
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -61,6 +238,7 @@ class _ScalePracticeState extends State<ScalePractice> {
               children: _scaleNotes.asMap().entries.map((e) {
                 final isActive = _currentNoteIndex == -1 || _currentNoteIndex == e.key;
                 final isRoot = e.key == 0;
+                final isCurrent = _currentNoteIndex == e.key;
                 return GestureDetector(
                   onTap: () => setState(() => _currentNoteIndex = _currentNoteIndex == e.key ? -1 : e.key),
                   child: Chip(
@@ -71,6 +249,7 @@ class _ScalePracticeState extends State<ScalePractice> {
                         fontSize: 16,
                       )),
                     backgroundColor: !isActive ? Colors.grey[300]
+                        : (isCurrent && _noteMatched) ? Colors.green
                         : isRoot ? Colors.red[700]
                         : const Color(0xFF8B6914),
                   ),
@@ -96,6 +275,7 @@ class _ScalePracticeState extends State<ScalePractice> {
               children: [
                 _controlBtn(Icons.skip_previous, 'Prev', () {
                   setState(() {
+                    _noteMatched = false;
                     if (_currentNoteIndex <= 0) {
                       _currentNoteIndex = _scaleNotes.length - 1;
                     } else {
@@ -103,11 +283,19 @@ class _ScalePracticeState extends State<ScalePractice> {
                     }
                   });
                 }),
+                // Mic button
+                _controlBtn(
+                  _micEnabled ? Icons.mic_off : Icons.mic,
+                  _micEnabled ? 'Mic Off' : 'Mic On',
+                  _toggleMic,
+                  color: _micEnabled ? Colors.red : Colors.purple,
+                ),
                 _controlBtn(Icons.grid_view, 'All', () {
                   setState(() => _currentNoteIndex = -1);
                 }),
                 _controlBtn(Icons.skip_next, 'Next', () {
                   setState(() {
+                    _noteMatched = false;
                     if (_currentNoteIndex >= _scaleNotes.length - 1 || _currentNoteIndex == -1) {
                       _currentNoteIndex = 0;
                     } else {
@@ -130,15 +318,15 @@ class _ScalePracticeState extends State<ScalePractice> {
     );
   }
 
-  Widget _controlBtn(IconData icon, String label, VoidCallback onTap) {
+  Widget _controlBtn(IconData icon, String label, VoidCallback onTap, {Color? color}) {
     return ElevatedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 20),
       label: Text(label),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF8B6914),
+        backgroundColor: color ?? const Color(0xFF8B6914),
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
     );
   }
@@ -172,6 +360,7 @@ class _ScalePracticeState extends State<ScalePractice> {
           cellH: cellH,
           leftPad: leftPad,
           topPad: topPad,
+          matchedNote: _noteMatched && _currentNoteIndex >= 0 ? _scaleNotes[_currentNoteIndex] : null,
         ),
       ),
     );
@@ -188,6 +377,7 @@ class _ScaleFretboardPainter extends CustomPainter {
   final bool highlightRoot;
   final bool isDark;
   final double cellW, cellH, leftPad, topPad;
+  final String? matchedNote;
 
   _ScaleFretboardPainter({
     required this.strings,
@@ -202,6 +392,7 @@ class _ScaleFretboardPainter extends CustomPainter {
     required this.cellH,
     required this.leftPad,
     required this.topPad,
+    this.matchedNote,
   });
 
   @override
@@ -229,7 +420,6 @@ class _ScaleFretboardPainter extends CustomPainter {
     // Draw strings (horizontal)
     for (int s = 0; s < strings.length; s++) {
       final y = topPad + s * cellH;
-      // String label
       final tp = TextPainter(
         text: TextSpan(
           text: '${strings[s].number}${strings[s].openNote}',
@@ -238,7 +428,6 @@ class _ScaleFretboardPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(2, y - tp.height / 2));
-      // String line
       canvas.drawLine(Offset(leftPad, y), Offset(leftPad + fretCount * cellW, y), stringPaint);
     }
 
@@ -248,7 +437,7 @@ class _ScaleFretboardPainter extends CustomPainter {
       canvas.drawLine(Offset(x, topPad), Offset(x, topPad + (strings.length - 1) * cellH), linePaint);
     }
 
-    // Draw fret markers (dots at 3,5,7,9,12)
+    // Draw fret markers
     const markerFrets = [3, 5, 7, 9, 12, 15];
     for (final mf in markerFrets) {
       if (mf >= startFret && mf <= endFret) {
@@ -270,7 +459,16 @@ class _ScaleFretboardPainter extends CustomPainter {
               ? leftPad + 0.5 * cellW * 0.5
               : leftPad + (fret - startFret + 0.5) * cellW;
           final isRoot = noteAtFret == rootNote && highlightRoot;
-          final dotColor = isRoot ? Colors.red[700]! : const Color(0xFF8B6914);
+          final isMatched = matchedNote != null && noteAtFret == matchedNote;
+
+          Color dotColor;
+          if (isMatched) {
+            dotColor = Colors.green;
+          } else if (isRoot) {
+            dotColor = Colors.red[700]!;
+          } else {
+            dotColor = const Color(0xFF8B6914);
+          }
           final radius = isRoot ? 12.0 : 10.0;
 
           canvas.drawCircle(Offset(x, y), radius, Paint()..color = dotColor);
