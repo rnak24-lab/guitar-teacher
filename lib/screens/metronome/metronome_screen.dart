@@ -4,6 +4,20 @@ import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// ── Color tokens (warm wood / apricot / gold) ──
+class _C {
+  static const bg = Color(0xFFFAF3E8);
+  static const cardBg = Color(0xFFF0E4CC);
+  static const border = Color(0xFFC8A878);
+  static const gold = Color(0xFFD4A017);
+  static const goldDeep = Color(0xFFB8860B);
+  static const dotInactive = Color(0xFFE8C9A0);
+  static const dotActive = Color(0xFFD4956A);
+  static const textPrimary = Color(0xFF3D2B1F);
+  static const textSecondary = Color(0xFF7A5C3E);
+  static const btnInactiveBg = Color(0xFFE8D5B0);
+}
+
 class MetronomeScreen extends StatefulWidget {
   const MetronomeScreen({super.key});
 
@@ -13,34 +27,48 @@ class MetronomeScreen extends StatefulWidget {
 
 class _MetronomeScreenState extends State<MetronomeScreen>
     with SingleTickerProviderStateMixin {
-  int _bpm = 60;
+  int _bpm = 120;
   int _beatsPerMeasure = 4;
-  int _currentBeat = 0;
+  int _currentBeat = -1;
   bool _isPlaying = false;
   Timer? _timer;
 
-  // 진동 / 사운드 토글
-  bool _vibrationEnabled = true;
+  bool _vibrationEnabled = false;
   bool _soundEnabled = true;
 
-  // 오디오 플레이어 (강박 / 약박)
   final AudioPlayer _highPlayer = AudioPlayer();
   final AudioPlayer _lowPlayer = AudioPlayer();
 
+  // Time signatures
+  static const _signatures = [2, 3, 4, 6];
+  static const _sigLabels = ['2/4', '3/4', '4/4', '6/8'];
+
+  // Tempo presets
+  static const _presets = [
+    ('Grave', 35),
+    ('Largo', 50),
+    ('Larghetto', 63),
+    ('Adagio', 72),
+    ('Andante', 92),
+    ('Moderato', 114),
+    ('Allegro', 138),
+    ('Vivace', 166),
+    ('Presto', 188),
+    ('Prestissimo', 210),
+  ];
+
   String get _tempoName {
-    if (_bpm < 40) return 'Grave';
-    if (_bpm < 60) return 'Largo';
-    if (_bpm < 66) return 'Larghetto';
-    if (_bpm < 76) return 'Adagio';
-    if (_bpm < 108) return 'Andante';
-    if (_bpm < 120) return 'Moderato';
-    if (_bpm < 156) return 'Allegro';
-    if (_bpm < 176) return 'Vivace';
-    if (_bpm < 200) return 'Presto';
+    if (_bpm <= 40) return 'Grave';
+    if (_bpm <= 55) return 'Largo';
+    if (_bpm <= 65) return 'Larghetto';
+    if (_bpm <= 85) return 'Adagio';
+    if (_bpm <= 105) return 'Andante';
+    if (_bpm <= 120) return 'Moderato';
+    if (_bpm <= 156) return 'Allegro';
+    if (_bpm <= 176) return 'Vivace';
+    if (_bpm <= 200) return 'Presto';
     return 'Prestissimo';
   }
-
-  final List<int> _timeSignatures = [2, 3, 4, 6];
 
   @override
   void initState() {
@@ -51,8 +79,10 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _vibrationEnabled = prefs.getBool('metronome_vibration') ?? true;
+      _vibrationEnabled = prefs.getBool('metronome_vibration') ?? false;
       _soundEnabled = prefs.getBool('metronome_sound') ?? true;
+      _bpm = prefs.getInt('metronome_bpm') ?? 120;
+      _beatsPerMeasure = prefs.getInt('metronome_beats') ?? 4;
     });
   }
 
@@ -60,6 +90,8 @@ class _MetronomeScreenState extends State<MetronomeScreen>
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('metronome_vibration', _vibrationEnabled);
     await prefs.setBool('metronome_sound', _soundEnabled);
+    await prefs.setInt('metronome_bpm', _bpm);
+    await prefs.setInt('metronome_beats', _beatsPerMeasure);
   }
 
   void _togglePlay() {
@@ -67,9 +99,11 @@ class _MetronomeScreenState extends State<MetronomeScreen>
       _isPlaying = !_isPlaying;
       if (_isPlaying) {
         _currentBeat = 0;
+        _playBeat(true);
         _startTimer();
       } else {
         _timer?.cancel();
+        _currentBeat = -1;
       }
     });
   }
@@ -85,9 +119,7 @@ class _MetronomeScreenState extends State<MetronomeScreen>
     });
   }
 
-  /// 비트 재생: 강박(첫 박)이면 높은 소리 + 강한 진동, 약박이면 낮은 소리 + 약한 진동
   void _playBeat(bool isDownbeat) {
-    // 사운드 재생
     if (_soundEnabled) {
       if (isDownbeat) {
         _highPlayer.stop();
@@ -97,8 +129,6 @@ class _MetronomeScreenState extends State<MetronomeScreen>
         _lowPlayer.play(AssetSource('sounds/click_low.wav'));
       }
     }
-
-    // 진동
     if (_vibrationEnabled) {
       if (isDownbeat) {
         HapticFeedback.heavyImpact();
@@ -108,20 +138,64 @@ class _MetronomeScreenState extends State<MetronomeScreen>
     }
   }
 
-  void _changeBpm(int delta) {
+  void _setBpm(int bpm) {
     setState(() {
-      _bpm = (_bpm + delta).clamp(20, 300);
+      _bpm = bpm.clamp(20, 300);
       if (_isPlaying) _startTimer();
     });
+    _savePreferences();
   }
 
-  void _changeTimeSignature() {
-    setState(() {
-      final idx = _timeSignatures.indexOf(_beatsPerMeasure);
-      _beatsPerMeasure = _timeSignatures[(idx + 1) % _timeSignatures.length];
-      _currentBeat = 0;
-      if (_isPlaying) _startTimer();
-    });
+  void _showBpmKeypad() async {
+    final controller = TextEditingController(text: '$_bpm');
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _C.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('BPM', style: TextStyle(color: _C.textPrimary, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          style: TextStyle(fontSize: 32, color: _C.textPrimary, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+          decoration: InputDecoration(
+            hintText: '20 ~ 300',
+            hintStyle: TextStyle(color: _C.textSecondary.withValues(alpha: 0.5)),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: _C.border),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: _C.gold, width: 2),
+            ),
+          ),
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(3),
+          ],
+          onSubmitted: (v) {
+            final n = int.tryParse(v);
+            if (n != null) Navigator.pop(ctx, n.clamp(20, 300));
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: _C.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _C.gold),
+            onPressed: () {
+              final n = int.tryParse(controller.text);
+              if (n != null) Navigator.pop(ctx, n.clamp(20, 300));
+            },
+            child: const Text('OK', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (result != null) _setBpm(result);
   }
 
   @override
@@ -132,357 +206,61 @@ class _MetronomeScreenState extends State<MetronomeScreen>
     super.dispose();
   }
 
+  // ── Build ──
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _C.bg,
       appBar: AppBar(
         title: const Text('Metronome'),
+        backgroundColor: _C.cardBg,
+        foregroundColor: _C.textPrimary,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 12),
-
-          // --- 진동 / 사운드 토글 버튼 ---
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                // 진동 토글
-                Expanded(
-                  child: _ToggleButton(
-                    icon: _vibrationEnabled
-                        ? Icons.vibration
-                        : Icons.phone_android,
-                    label: _vibrationEnabled ? '진동 ON' : '진동 OFF',
-                    isActive: _vibrationEnabled,
-                    onTap: () {
-                      setState(() {
-                        _vibrationEnabled = !_vibrationEnabled;
-                      });
-                      _savePreferences();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 사운드 토글
-                Expanded(
-                  child: _ToggleButton(
-                    icon: _soundEnabled
-                        ? Icons.volume_up
-                        : Icons.volume_off,
-                    label: _soundEnabled ? '사운드 ON' : '사운드 OFF',
-                    isActive: _soundEnabled,
-                    onTap: () {
-                      setState(() {
-                        _soundEnabled = !_soundEnabled;
-                      });
-                      _savePreferences();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // --- 비트 시각화 ---
-          Container(
-            height: 160,
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_beatsPerMeasure, (i) {
-                  final isActive = _isPlaying && _currentBeat == i;
-                  final isDownbeat = i == 0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      width: isActive ? 56 : 44,
-                      height: isActive ? 56 : 44,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? (isDownbeat
-                                ? Colors.amber
-                                : Colors.red[700])
-                            : (isDownbeat
-                                ? Colors.amber.withValues(alpha: 0.3)
-                                : Colors.red[900]?.withValues(alpha: 0.5)),
-                        shape: BoxShape.circle,
-                        boxShadow: isActive
-                            ? [
-                                BoxShadow(
-                                  color: isDownbeat
-                                      ? Colors.amber.withValues(alpha: 0.6)
-                                      : Colors.red.withValues(alpha: 0.6),
-                                  blurRadius: 20,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: isDownbeat
-                            ? Text(
-                                isActive ? '>' : '1',
-                                style: TextStyle(
-                                  color: isActive
-                                      ? Colors.black
-                                      : Colors.white70,
-                                  fontSize: isActive ? 24 : 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : (isActive
-                                ? null
-                                : Text(
-                                    '${i + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white38,
-                                      fontSize: 14,
-                                    ),
-                                  )),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // --- 박자 + 음표 선택 ---
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _changeTimeSignature,
-                child: Container(
-                  width: 140,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$_beatsPerMeasure/4',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                width: 140,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Text(
-                    '\u2669\u2669\u2669\u2669',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // --- 악센트 패턴 ---
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('-/-',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 18)),
-                Text('- -',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 18)),
-                Icon(Icons.replay, color: Colors.grey[400]),
-              ],
-            ),
-          ),
-          const Spacer(),
-
-          // --- 템포 이름 ---
-          Text(_tempoName,
-              style: const TextStyle(color: Colors.white, fontSize: 22)),
-          const SizedBox(height: 8),
-
-          // --- BPM 조절 ---
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Column(
                   children: [
-                    Column(
-                      children: [
-                        Text('\u2669=',
-                            style: TextStyle(
-                                color: Colors.grey[400], fontSize: 16)),
-                      ],
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$_bpm',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 64,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      children: [
-                        _BpmButton(
-                          label: '+',
-                          onTap: () => _changeBpm(1),
-                          onLongPress: () => _changeBpm(5),
-                        ),
-                        const SizedBox(height: 8),
-                        _BpmButton(
-                          label: '-',
-                          onTap: () => _changeBpm(-1),
-                          onLongPress: () => _changeBpm(-5),
-                        ),
-                      ],
-                    ),
+                    // ── Toggle row (vibration / sound) ──
+                    _buildToggles(),
+                    const SizedBox(height: 20),
+
+                    // ── BPM display ──
+                    _buildBpmSection(),
+                    const SizedBox(height: 20),
+
+                    // ── Beat indicators ──
+                    _buildBeatIndicators(),
+                    const SizedBox(height: 20),
+
+                    // ── Time signature buttons ──
+                    _buildTimeSignatureButtons(),
+                    const SizedBox(height: 16),
+
+                    // ── Tempo presets ──
+                    _buildTempoPresets(),
+                    const SizedBox(height: 24),
+
+                    // ── Start / Stop button ──
+                    _buildPlayButton(),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-              const SizedBox(width: 20),
-              // 재생 버튼
-              GestureDetector(
-                onTap: _togglePlay,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3A3A3A),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[600]!, width: 2),
-                  ),
-                  child: Icon(
-                    _isPlaying ? Icons.stop : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 44,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // --- BPM 슬라이더 ---
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: SliderTheme(
-              data: SliderThemeData(
-                activeTrackColor: Colors.red[700],
-                inactiveTrackColor: Colors.grey[800],
-                thumbColor: Colors.red,
-              ),
-              child: Slider(
-                value: _bpm.toDouble(),
-                min: 20,
-                max: 300,
-                onChanged: (v) {
-                  setState(() {
-                    _bpm = v.round();
-                    if (_isPlaying) _startTimer();
-                  });
-                },
-              ),
             ),
-          ),
-          const SizedBox(height: 8),
 
-          // --- 광고 배너 ---
-          Container(
-            height: 50,
-            width: double.infinity,
-            color: Colors.grey[900],
-            child: Center(
-              child: Text(
-                'AD BANNER',
-                style: TextStyle(color: Colors.grey[700], fontSize: 11),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 토글 버튼 위젯 (진동 / 사운드)
-class _ToggleButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _ToggleButton({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive
-              ? Colors.red[900]?.withValues(alpha: 0.6)
-              : const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive ? Colors.red : Colors.grey[700]!,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? Colors.red[300] : Colors.grey[500],
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? Colors.white : Colors.grey[500],
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+            // ── Ad banner placeholder ──
+            Container(
+              height: 50,
+              width: double.infinity,
+              color: _C.cardBg,
+              child: Center(
+                child: Text('AD BANNER',
+                    style: TextStyle(color: _C.border, fontSize: 11)),
               ),
             ),
           ],
@@ -490,21 +268,148 @@ class _ToggleButton extends StatelessWidget {
       ),
     );
   }
-}
 
-class _BpmButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  // ── Toggles ──
+  Widget _buildToggles() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        _pillToggle(
+          label: 'Vibration',
+          icon: _vibrationEnabled ? Icons.vibration : Icons.phone_android,
+          isOn: _vibrationEnabled,
+          onTap: () {
+            setState(() => _vibrationEnabled = !_vibrationEnabled);
+            _savePreferences();
+          },
+        ),
+        const SizedBox(width: 12),
+        _pillToggle(
+          label: 'Sound',
+          icon: _soundEnabled ? Icons.volume_up : Icons.volume_off,
+          isOn: _soundEnabled,
+          onTap: () {
+            setState(() => _soundEnabled = !_soundEnabled);
+            _savePreferences();
+          },
+        ),
+      ],
+    );
+  }
 
-  const _BpmButton({
-    required this.label,
-    required this.onTap,
-    required this.onLongPress,
-  });
+  Widget _pillToggle({
+    required String label,
+    required IconData icon,
+    required bool isOn,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOn ? _C.gold : _C.btnInactiveBg,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isOn ? Colors.white : _C.textSecondary),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isOn ? Colors.white : _C.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  // ── BPM Section ──
+  Widget _buildBpmSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: _C.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border, width: 1),
+      ),
+      child: Column(
+        children: [
+          // BPM number (tappable)
+          GestureDetector(
+            onTap: _showBpmKeypad,
+            child: Text(
+              '$_bpm',
+              style: const TextStyle(
+                fontSize: 72,
+                fontWeight: FontWeight.bold,
+                color: _C.textPrimary,
+                height: 1.0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Tempo name (tappable -> applies preset)
+          GestureDetector(
+            onTap: _showBpmKeypad,
+            child: Text(
+              _tempoName,
+              style: const TextStyle(fontSize: 14, color: _C.textSecondary),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // -/+ row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _bpmCircleButton(
+                icon: Icons.remove,
+                onTap: () => _setBpm(_bpm - 1),
+                onLongPress: () => _setBpm(_bpm - 5),
+              ),
+              const SizedBox(width: 16),
+              // Slider
+              Expanded(
+                child: SliderTheme(
+                  data: SliderThemeData(
+                    activeTrackColor: _C.gold,
+                    inactiveTrackColor: _C.dotInactive,
+                    thumbColor: _C.goldDeep,
+                    overlayColor: _C.gold.withValues(alpha: 0.2),
+                    trackHeight: 4,
+                  ),
+                  child: Slider(
+                    value: _bpm.toDouble(),
+                    min: 20,
+                    max: 300,
+                    onChanged: (v) => _setBpm(v.round()),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              _bpmCircleButton(
+                icon: Icons.add,
+                onTap: () => _setBpm(_bpm + 1),
+                onLongPress: () => _setBpm(_bpm + 5),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bpmCircleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required VoidCallback onLongPress,
+  }) {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -512,18 +417,168 @@ class _BpmButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF444444),
-          borderRadius: BorderRadius.circular(8),
+          shape: BoxShape.circle,
+          border: Border.all(color: _C.gold, width: 2),
+          color: Colors.transparent,
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+        child: Icon(icon, color: _C.gold, size: 20),
+      ),
+    );
+  }
+
+  // ── Beat Indicators (horizontal dots) ──
+  Widget _buildBeatIndicators() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: _C.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border, width: 1),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_beatsPerMeasure, (i) {
+          final isActive = _isPlaying && _currentBeat == i;
+          final isDownbeat = i == 0;
+          final double size = isActive ? 28 : 20;
+
+          Color color;
+          if (isActive) {
+            color = isDownbeat ? _C.goldDeep : _C.dotActive;
+          } else {
+            color = Colors.transparent;
+          }
+
+          Color borderColor = isActive
+              ? (isDownbeat ? _C.goldDeep : _C.dotActive)
+              : _C.dotInactive;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 80),
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color,
+                border: Border.all(color: borderColor, width: 2.5),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: (isDownbeat ? _C.goldDeep : _C.dotActive)
+                              .withValues(alpha: 0.5),
+                          blurRadius: 12,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Time Signature Buttons ──
+  Widget _buildTimeSignatureButtons() {
+    return Row(
+      children: List.generate(_signatures.length, (i) {
+        final isSelected = _beatsPerMeasure == _signatures[i];
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: i == 0 ? 0 : 4,
+              right: i == _signatures.length - 1 ? 0 : 4,
+            ),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _beatsPerMeasure = _signatures[i];
+                  _currentBeat = 0;
+                  if (_isPlaying) _startTimer();
+                });
+                _savePreferences();
+              },
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isSelected ? _C.gold : _C.btnInactiveBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    _sigLabels[i],
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : _C.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
+        );
+      }),
+    );
+  }
+
+  // ── Tempo Presets (horizontal scroll chips) ──
+  Widget _buildTempoPresets() {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _presets.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final (name, bpm) = _presets[i];
+          final isActive = _tempoName == name;
+          return GestureDetector(
+            onTap: () => _setBpm(bpm),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: isActive ? _C.gold : _C.btnInactiveBg,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : _C.textSecondary,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Play / Stop Button ──
+  Widget _buildPlayButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: _togglePlay,
+        icon: Icon(
+          _isPlaying ? Icons.stop : Icons.play_arrow,
+          size: 24,
+        ),
+        label: Text(
+          _isPlaying ? 'Stop' : 'Start',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _isPlaying ? _C.textPrimary : _C.gold,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
         ),
       ),
     );
