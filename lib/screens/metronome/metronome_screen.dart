@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MetronomeScreen extends StatefulWidget {
   const MetronomeScreen({super.key});
@@ -9,14 +11,22 @@ class MetronomeScreen extends StatefulWidget {
   State<MetronomeScreen> createState() => _MetronomeScreenState();
 }
 
-class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProviderStateMixin {
+class _MetronomeScreenState extends State<MetronomeScreen>
+    with SingleTickerProviderStateMixin {
   int _bpm = 60;
-  int _beatsPerMeasure = 4; // 박자 (2/4, 3/4, 4/4, 6/8)
+  int _beatsPerMeasure = 4;
   int _currentBeat = 0;
   bool _isPlaying = false;
   Timer? _timer;
 
-  // 템포 이름
+  // 진동 / 사운드 토글
+  bool _vibrationEnabled = true;
+  bool _soundEnabled = true;
+
+  // 오디오 플레이어 (강박 / 약박)
+  final AudioPlayer _highPlayer = AudioPlayer();
+  final AudioPlayer _lowPlayer = AudioPlayer();
+
   String get _tempoName {
     if (_bpm < 40) return 'Grave';
     if (_bpm < 60) return 'Largo';
@@ -31,6 +41,26 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
   }
 
   final List<int> _timeSignatures = [2, 3, 4, 6];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _vibrationEnabled = prefs.getBool('metronome_vibration') ?? true;
+      _soundEnabled = prefs.getBool('metronome_sound') ?? true;
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('metronome_vibration', _vibrationEnabled);
+    await prefs.setBool('metronome_sound', _soundEnabled);
+  }
 
   void _togglePlay() {
     setState(() {
@@ -50,14 +80,32 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
     _timer = Timer.periodic(interval, (_) {
       setState(() {
         _currentBeat = (_currentBeat + 1) % _beatsPerMeasure;
-        // 강박(1박)은 높은 소리, 나머지는 낮은 소리
-        if (_currentBeat == 0) {
-          HapticFeedback.heavyImpact();
-        } else {
-          HapticFeedback.lightImpact();
-        }
+        _playBeat(_currentBeat == 0);
       });
     });
+  }
+
+  /// 비트 재생: 강박(첫 박)이면 높은 소리 + 강한 진동, 약박이면 낮은 소리 + 약한 진동
+  void _playBeat(bool isDownbeat) {
+    // 사운드 재생
+    if (_soundEnabled) {
+      if (isDownbeat) {
+        _highPlayer.stop();
+        _highPlayer.play(AssetSource('sounds/click_high.wav'));
+      } else {
+        _lowPlayer.stop();
+        _lowPlayer.play(AssetSource('sounds/click_low.wav'));
+      }
+    }
+
+    // 진동
+    if (_vibrationEnabled) {
+      if (isDownbeat) {
+        HapticFeedback.heavyImpact();
+      } else {
+        HapticFeedback.lightImpact();
+      }
+    }
   }
 
   void _changeBpm(int delta) {
@@ -79,6 +127,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
   @override
   void dispose() {
     _timer?.cancel();
+    _highPlayer.dispose();
+    _lowPlayer.dispose();
     super.dispose();
   }
 
@@ -90,8 +140,52 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
-          // 비트 시각화
+          const SizedBox(height: 12),
+
+          // --- 진동 / 사운드 토글 버튼 ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                // 진동 토글
+                Expanded(
+                  child: _ToggleButton(
+                    icon: _vibrationEnabled
+                        ? Icons.vibration
+                        : Icons.phone_android,
+                    label: _vibrationEnabled ? '진동 ON' : '진동 OFF',
+                    isActive: _vibrationEnabled,
+                    onTap: () {
+                      setState(() {
+                        _vibrationEnabled = !_vibrationEnabled;
+                      });
+                      _savePreferences();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 사운드 토글
+                Expanded(
+                  child: _ToggleButton(
+                    icon: _soundEnabled
+                        ? Icons.volume_up
+                        : Icons.volume_off,
+                    label: _soundEnabled ? '사운드 ON' : '사운드 OFF',
+                    isActive: _soundEnabled,
+                    onTap: () {
+                      setState(() {
+                        _soundEnabled = !_soundEnabled;
+                      });
+                      _savePreferences();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // --- 비트 시각화 ---
           Container(
             height: 160,
             margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -113,17 +207,45 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
                       height: isActive ? 56 : 44,
                       decoration: BoxDecoration(
                         color: isActive
-                            ? (isDownbeat ? Colors.red : Colors.red[700])
-                            : (isDownbeat ? Colors.red[900] : Colors.red[900]?.withValues(alpha: 0.5)),
+                            ? (isDownbeat
+                                ? Colors.amber
+                                : Colors.red[700])
+                            : (isDownbeat
+                                ? Colors.amber.withValues(alpha: 0.3)
+                                : Colors.red[900]?.withValues(alpha: 0.5)),
                         shape: BoxShape.circle,
-                        boxShadow: isActive ? [
-                          BoxShadow(color: Colors.red.withValues(alpha: 0.6), blurRadius: 20),
-                        ] : null,
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: isDownbeat
+                                      ? Colors.amber.withValues(alpha: 0.6)
+                                      : Colors.red.withValues(alpha: 0.6),
+                                  blurRadius: 20,
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Center(
-                        child: isDownbeat && isActive
-                            ? const Text('>', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))
-                            : null,
+                        child: isDownbeat
+                            ? Text(
+                                isActive ? '>' : '1',
+                                style: TextStyle(
+                                  color: isActive
+                                      ? Colors.black
+                                      : Colors.white70,
+                                  fontSize: isActive ? 24 : 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : (isActive
+                                ? null
+                                : Text(
+                                    '${i + 1}',
+                                    style: const TextStyle(
+                                      color: Colors.white38,
+                                      fontSize: 14,
+                                    ),
+                                  )),
                       ),
                     ),
                   );
@@ -132,15 +254,16 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
             ),
           ),
           const SizedBox(height: 20),
-          // 박자 + 음표 선택
+
+          // --- 박자 + 음표 선택 ---
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 박자 버튼
               GestureDetector(
                 onTap: _changeTimeSignature,
                 child: Container(
-                  width: 140, height: 56,
+                  width: 140,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: const Color(0xFF2A2A2A),
                     borderRadius: BorderRadius.circular(12),
@@ -148,27 +271,35 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
                   child: Center(
                     child: Text(
                       '$_beatsPerMeasure/4',
-                      style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              // 음표 패턴
               Container(
-                width: 140, height: 56,
+                width: 140,
+                height: 56,
                 decoration: BoxDecoration(
                   color: const Color(0xFF2A2A2A),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
-                  child: Text('♩♩♩♩', style: TextStyle(color: Colors.white, fontSize: 24)),
+                  child: Text(
+                    '\u2669\u2669\u2669\u2669',
+                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          // 악센트 패턴
+
+          // --- 악센트 패턴 ---
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -179,23 +310,28 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('-/-', style: TextStyle(color: Colors.grey[400], fontSize: 18)),
-                Text('- -', style: TextStyle(color: Colors.grey[400], fontSize: 18)),
+                Text('-/-',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 18)),
+                Text('- -',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 18)),
                 Icon(Icons.replay, color: Colors.grey[400]),
               ],
             ),
           ),
           const Spacer(),
-          // 템포 이름
-          Text(_tempoName, style: const TextStyle(color: Colors.white, fontSize: 22)),
+
+          // --- 템포 이름 ---
+          Text(_tempoName,
+              style: const TextStyle(color: Colors.white, fontSize: 22)),
           const SizedBox(height: 8),
-          // BPM 조절
+
+          // --- BPM 조절 ---
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // BPM 표시 + 조절
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2A2A2A),
                   borderRadius: BorderRadius.circular(16),
@@ -204,7 +340,9 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
                   children: [
                     Column(
                       children: [
-                        Text('♩=', style: TextStyle(color: Colors.grey[400], fontSize: 16)),
+                        Text('\u2669=',
+                            style: TextStyle(
+                                color: Colors.grey[400], fontSize: 16)),
                       ],
                     ),
                     const SizedBox(width: 8),
@@ -219,9 +357,17 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
                     const SizedBox(width: 16),
                     Column(
                       children: [
-                        _BpmButton(label: '+', onTap: () => _changeBpm(1), onLongPress: () => _changeBpm(5)),
+                        _BpmButton(
+                          label: '+',
+                          onTap: () => _changeBpm(1),
+                          onLongPress: () => _changeBpm(5),
+                        ),
                         const SizedBox(height: 8),
-                        _BpmButton(label: '-', onTap: () => _changeBpm(-1), onLongPress: () => _changeBpm(-5)),
+                        _BpmButton(
+                          label: '-',
+                          onTap: () => _changeBpm(-1),
+                          onLongPress: () => _changeBpm(-5),
+                        ),
                       ],
                     ),
                   ],
@@ -232,7 +378,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
               GestureDetector(
                 onTap: _togglePlay,
                 child: Container(
-                  width: 80, height: 80,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: const Color(0xFF3A3A3A),
                     shape: BoxShape.circle,
@@ -248,7 +395,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
             ],
           ),
           const SizedBox(height: 8),
-          // BPM 슬라이더
+
+          // --- BPM 슬라이더 ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: SliderTheme(
@@ -259,7 +407,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
               ),
               child: Slider(
                 value: _bpm.toDouble(),
-                min: 20, max: 300,
+                min: 20,
+                max: 300,
                 onChanged: (v) {
                   setState(() {
                     _bpm = v.round();
@@ -270,23 +419,74 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
             ),
           ),
           const SizedBox(height: 8),
-          // 볼륨 아이콘
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: Icon(Icons.volume_up, color: Colors.grey[500]),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // 광고 배너
+
+          // --- 광고 배너 ---
           Container(
-            height: 50, width: double.infinity, color: Colors.grey[900],
-            child: Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey[700], fontSize: 11))),
+            height: 50,
+            width: double.infinity,
+            color: Colors.grey[900],
+            child: Center(
+              child: Text(
+                'AD BANNER',
+                style: TextStyle(color: Colors.grey[700], fontSize: 11),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 토글 버튼 위젯 (진동 / 사운드)
+class _ToggleButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _ToggleButton({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive
+              ? Colors.red[900]?.withValues(alpha: 0.6)
+              : const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? Colors.red : Colors.grey[700]!,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.red[300] : Colors.grey[500],
+              size: 22,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.grey[500],
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -297,7 +497,11 @@ class _BpmButton extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  const _BpmButton({required this.label, required this.onTap, required this.onLongPress});
+  const _BpmButton({
+    required this.label,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -305,13 +509,21 @@ class _BpmButton extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        width: 40, height: 40,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           color: const Color(0xFF444444),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
-          child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );
