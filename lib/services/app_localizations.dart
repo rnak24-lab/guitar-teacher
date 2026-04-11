@@ -29,7 +29,7 @@ class AppLocalizations extends ChangeNotifier {
     // ==================== ENGLISH ====================
     'en': {
       // App
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': 'Start!',
       'next': 'Next',
       'done': 'Done',
@@ -59,7 +59,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_settings_sub': 'Theme / Language',
 
       // Rate dialog
-      'rate_title': 'Enjoying Guitar Teacher? 🎸',
+      'rate_title': 'Enjoying Guitar Educator? 🎸',
       'rate_body': 'If you find this app helpful,\nplease rate us!',
 
       // Settings
@@ -179,7 +179,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== KOREAN ====================
     'ko': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': '시작!',
       'next': '다음',
       'done': '완료',
@@ -205,7 +205,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_record_sub': '이번주 통계',
       'home_settings': '설정',
       'home_settings_sub': '테마/언어',
-      'rate_title': 'Guitar Teacher 잘 쓰고 계신가요? 🎸',
+      'rate_title': 'Guitar Educator 잘 쓰고 계신가요? 🎸',
       'rate_body': '도움이 되셨다면\n평점을 남겨주세요!',
       'settings_title': '설정',
       'settings_display': '화면',
@@ -309,7 +309,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== JAPANESE ====================
     'ja': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': 'スタート！',
       'next': '次へ',
       'done': '完了',
@@ -348,7 +348,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== CHINESE ====================
     'zh': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': '开始！',
       'next': '下一个',
       'done': '完成',
@@ -375,7 +375,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== VIETNAMESE ====================
     'vi': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': 'Bắt đầu!',
       'home_fretboard': 'Phím đàn',
       'home_fretboard_sub': 'Ghi nhớ nốt nhạc',
@@ -400,7 +400,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== FRENCH ====================
     'fr': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': 'Commencer !',
       'home_fretboard': 'Manche',
       'home_fretboard_sub': 'Mémoriser les notes',
@@ -425,7 +425,7 @@ class AppLocalizations extends ChangeNotifier {
 
     // ==================== SPANISH ====================
     'es': {
-      'app_title': 'Guitar Teacher',
+      'app_title': 'Guitar Educator',
       'start': '¡Empezar!',
       'home_fretboard': 'Diapasón',
       'home_fretboard_sub': 'Memorizar notas',

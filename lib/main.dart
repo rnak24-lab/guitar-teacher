@@ -70,7 +70,7 @@ class GuitarTeacherAppState extends State<GuitarTeacherApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guitar Teacher',
+      title: 'Guitar Educator',
       debugShowCheckedModeBanner: false,
       theme: _lightTheme,
       darkTheme: _darkTheme,

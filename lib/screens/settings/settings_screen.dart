@@ -85,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
           _SectionHeader(title: tr('settings_info')),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text('Guitar Teacher'),
+            title: const Text('Guitar Educator'),
             subtitle: Text(tr('settings_version')),
           ),
           ListTile(
