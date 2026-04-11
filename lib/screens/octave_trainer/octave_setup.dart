@@ -197,16 +197,6 @@ class _OctaveSetupState extends State<OctaveSetup> with TickerProviderStateMixin
                         style: TextStyle(fontSize: 22, color: _timeLeft > 2 ? Colors.grey[400] : Colors.red),
                       ),
                       const SizedBox(height: 16),
-                      // Form description
-                      Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(form.description, textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       Text('Tap to skip →', style: TextStyle(fontSize: 12, color: Colors.grey[400])),
                     ],
                   ),
