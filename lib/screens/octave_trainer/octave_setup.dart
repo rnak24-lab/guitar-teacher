@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/note.dart';
+import '../../services/app_localizations.dart';
 import 'octave_game.dart';
 
 class OctaveSetup extends StatefulWidget {
@@ -18,7 +19,7 @@ class _OctaveSetupState extends State<OctaveSetup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('옥타브 폼 연습'),
+        title: Text(tr('octave_setup_title')),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
@@ -27,14 +28,13 @@ class _OctaveSetupState extends State<OctaveSetup> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('🎵 음 선택 (또는 랜덤)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('octave_note_select'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: 6, runSpacing: 6,
               children: [
                 ChoiceChip(
-                  label: const Text('랜덤'),
+                  label: Text(tr('octave_random')),
                   selected: _selectedNote == 'random',
                   onSelected: (_) => setState(() => _selectedNote = 'random'),
                 ),
@@ -46,13 +46,13 @@ class _OctaveSetupState extends State<OctaveSetup> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text('📐 폼 선택', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('octave_form_select'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: List.generate(5, (i) {
                 final formNum = i + 1;
-                final names = ['E폼', 'D폼', 'C폼', 'A폼', 'G폼'];
+                final names = ['E Form', 'D Form', 'C Form', 'A Form', 'G Form'];
                 return FilterChip(
                   label: Text('$formNum (${names[i]})'),
                   selected: _selectedForms.contains(formNum),
@@ -69,45 +69,33 @@ class _OctaveSetupState extends State<OctaveSetup> {
               }),
             ),
             const SizedBox(height: 24),
-            const Text('⏱ 시간 설정', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('octave_time'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Slider(
-              value: _seconds,
-              min: 3,
-              max: 30,
-              divisions: 27,
-              label: '${_seconds.toInt()}초',
+              value: _seconds, min: 3, max: 30, divisions: 27,
+              label: '${_seconds.toInt()}s',
               onChanged: (v) => setState(() => _seconds = v),
             ),
             const Spacer(),
             SizedBox(
-              width: double.infinity,
-              height: 56,
+              width: double.infinity, height: 56,
               child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => OctaveGame(
-                      selectedForms: _selectedForms.toList()..sort(),
-                      seconds: _seconds.toInt(),
-                      selectedNote: _selectedNote,
-                    ),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => OctaveGame(
+                    selectedForms: _selectedForms.toList()..sort(),
+                    seconds: _seconds.toInt(),
+                    selectedNote: _selectedNote,
                   ),
-                ),
+                )),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.orange, foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('시작!', style: TextStyle(fontSize: 20)),
+                child: Text(tr('start'), style: const TextStyle(fontSize: 20)),
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              height: 50,
-              width: double.infinity,
-              color: Colors.grey[200],
-              child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11))),
-            ),
+            Container(height: 50, width: double.infinity, color: Colors.grey[200],
+              child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11)))),
           ],
         ),
       ),

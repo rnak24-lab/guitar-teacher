@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/octave_form.dart';
+import '../../services/app_localizations.dart';
 import 'form_info_dialog.dart';
 
 class OctaveGame extends StatefulWidget {
@@ -62,7 +63,7 @@ class _OctaveGameState extends State<OctaveGame> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('옥타브 폼 연습'),
+        title: Text(tr('octave_game_title')),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -93,7 +94,7 @@ class _OctaveGameState extends State<OctaveGame> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '$_currentFormIndex번 폼',
+                    tr('octave_form_n').replaceAll('{n}', '$_currentFormIndex'),
                     style: const TextStyle(fontSize: 24, color: Colors.grey),
                   ),
                   Text(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/chord.dart';
 import '../../widgets/chord_diagram_widget.dart';
 import '../../services/practice_record.dart';
+import '../../services/app_localizations.dart';
 
 class ChordGame extends StatefulWidget {
   final int seconds;
@@ -76,7 +77,7 @@ class _ChordGameState extends State<ChordGame> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAE5C8),
       appBar: AppBar(
-        title: Text('코드 연습 ($_diffLabel)'),
+        title: Text('${tr('chord_game_title')} ($_diffLabel)'),
         backgroundColor: const Color(0xFF8B6914),
         foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
@@ -102,7 +103,7 @@ class _ChordGameState extends State<ChordGame> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (_paused)
-                    const Text('⏸ 일시정지', style: TextStyle(fontSize: 20, color: Colors.orange)),
+                    Text(tr('chord_pause'), style: const TextStyle(fontSize: 20, color: Colors.orange)),
                   const SizedBox(height: 8),
                   Text(_currentChord.name,
                     style: const TextStyle(fontSize: 100, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
@@ -115,11 +116,10 @@ class _ChordGameState extends State<ChordGame> {
                   // 코드 다이어그램
                   if (_showAnswer) ChordDiagramWidget(chord: _currentChord),
                   const SizedBox(height: 16),
-                  // 정답보기 버튼
                   OutlinedButton.icon(
                     onPressed: _toggleAnswer,
                     icon: Icon(_showAnswer ? Icons.visibility_off : Icons.visibility),
-                    label: Text(_showAnswer ? '정답 숨기기' : '정답 보기'),
+                    label: Text(_showAnswer ? tr('chord_hide_answer') : tr('chord_show_answer')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF8B6914),
                       side: const BorderSide(color: Color(0xFF8B6914)),
@@ -127,7 +127,7 @@ class _ChordGameState extends State<ChordGame> {
                   ),
                   const SizedBox(height: 16),
                   if (_nextChord != null)
-                    Text('다음: ${_nextChord!.name}',
+                    Text(tr('chord_next').replaceAll('{name}', _nextChord!.name),
                       style: TextStyle(fontSize: 18, color: Colors.brown[300])),
                 ],
               ),
@@ -142,9 +142,9 @@ class _ChordGameState extends State<ChordGame> {
 
   String get _diffLabel {
     switch (widget.difficulty) {
-      case 'beginner': return '초급';
-      case 'intermediate': return '중급';
-      case 'advanced': return '고급';
+      case 'beginner': return tr('chord_beginner');
+      case 'intermediate': return tr('chord_intermediate');
+      case 'advanced': return tr('chord_advanced');
       default: return '';
     }
   }

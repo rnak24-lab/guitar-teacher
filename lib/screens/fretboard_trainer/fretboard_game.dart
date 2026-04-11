@@ -4,6 +4,7 @@ import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../utils/music_theory.dart';
 import '../../services/practice_record.dart';
+import '../../services/app_localizations.dart';
 
 class FretboardGame extends StatefulWidget {
   final int seconds;
@@ -97,14 +98,14 @@ class _FretboardGameState extends State<FretboardGame> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('프렛보드 연습 | 점수: $_score/$_total'),
+        title: Text('${tr('fretboard_game_title')} | ${tr('fretboard_score')}: $_score/$_total'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           Row(
             children: [
-              const Text('자동', style: TextStyle(fontSize: 12)),
+              Text(tr('fretboard_auto'), style: const TextStyle(fontSize: 12)),
               Switch(
                 value: _autoAdvance,
                 onChanged: (v) => setState(() => _autoAdvance = v),
@@ -128,7 +129,7 @@ class _FretboardGameState extends State<FretboardGame> {
           const SizedBox(height: 16),
           // 문제 표시
           Text(
-            '${gs.label}에서',
+            tr('fretboard_on_string').replaceAll('{n}', '${gs.number}'),
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
           Text(
@@ -140,7 +141,7 @@ class _FretboardGameState extends State<FretboardGame> {
             ),
           ),
           Text(
-            '을(를) 찾으세요! ($_timeLeft초)',
+            '${tr('fretboard_find')} (${_timeLeft}s)',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
@@ -204,7 +205,7 @@ class _FretboardGameState extends State<FretboardGame> {
               padding: const EdgeInsets.all(8),
               child: ElevatedButton(
                 onPressed: _nextQuestion,
-                child: const Text('다음 문제 →'),
+                child: Text(tr('fretboard_next_q')),
               ),
             ),
           // 광고 배너 자리

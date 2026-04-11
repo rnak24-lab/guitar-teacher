@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/app_localizations.dart';
 import 'fretboard_game.dart';
 
 class FretboardSetup extends StatefulWidget {
@@ -17,7 +18,7 @@ class _FretboardSetupState extends State<FretboardSetup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('프렛보드 연습 설정'),
+        title: Text(tr('fretboard_setup_title')),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -26,18 +27,17 @@ class _FretboardSetupState extends State<FretboardSetup> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('⏱ 시간 설정 (초)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('fretboard_time'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Slider(
               value: _seconds,
-              min: 1,
-              max: 30,
-              divisions: 29,
-              label: '${_seconds.toInt()}초',
+              min: 1, max: 30, divisions: 29,
+              label: '${_seconds.toInt()}s',
               onChanged: (v) => setState(() => _seconds = v),
             ),
-            Text('${_seconds.toInt()}초마다 새 음이 나옵니다', style: const TextStyle(color: Colors.grey)),
+            Text(tr('fretboard_time_desc').replaceAll('{n}', '${_seconds.toInt()}'),
+              style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
-            const Text('🎸 줄 선택', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('fretboard_strings'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -60,44 +60,34 @@ class _FretboardSetupState extends State<FretboardSetup> {
               }),
             ),
             const SizedBox(height: 24),
-            const Text('🎲 모드', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('fretboard_mode'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SwitchListTile(
-              title: const Text('랜덤 음'),
-              subtitle: Text(_randomMode ? '12음이 랜덤으로 나옵니다' : '음 순서를 직접 지정합니다'),
+              title: Text(tr('fretboard_random')),
+              subtitle: Text(_randomMode ? tr('fretboard_random_on') : tr('fretboard_random_off')),
               value: _randomMode,
               onChanged: (v) => setState(() => _randomMode = v),
             ),
             const Spacer(),
             SizedBox(
-              width: double.infinity,
-              height: 56,
+              width: double.infinity, height: 56,
               child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FretboardGame(
-                      seconds: _seconds.toInt(),
-                      selectedStrings: _selectedStrings.toList()..sort(),
-                      randomMode: _randomMode,
-                    ),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => FretboardGame(
+                    seconds: _seconds.toInt(),
+                    selectedStrings: _selectedStrings.toList()..sort(),
+                    randomMode: _randomMode,
                   ),
-                ),
+                )),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue, foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('시작!', style: TextStyle(fontSize: 20)),
+                child: Text(tr('start'), style: const TextStyle(fontSize: 20)),
               ),
             ),
             const SizedBox(height: 16),
-            // 광고 배너 자리
-            Container(
-              height: 50,
-              width: double.infinity,
-              color: Colors.grey[200],
-              child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11))),
-            ),
+            Container(height: 50, width: double.infinity, color: Colors.grey[200],
+              child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11)))),
           ],
         ),
       ),

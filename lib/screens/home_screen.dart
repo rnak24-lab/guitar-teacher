@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/app_localizations.dart';
 import 'fretboard_trainer/fretboard_setup.dart';
 import 'octave_trainer/octave_setup.dart';
 import 'chord_trainer/chord_setup.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Guitar Teacher 🎸', style: TextStyle(fontSize: 22)),
+        title: Text('${tr('app_title')} 🎸', style: const TextStyle(fontSize: 22)),
         centerTitle: true,
         actions: [
           IconButton(
@@ -37,28 +38,28 @@ class HomeScreen extends StatelessWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-                  _StageCard(icon: Icons.music_note, title: '프렛보드', subtitle: '음 위치 외우기',
+                  _StageCard(icon: Icons.music_note, title: tr('home_fretboard'), subtitle: tr('home_fretboard_sub'),
                     color: const Color(0xFF4A90D9),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FretboardSetup()))),
-                  _StageCard(icon: Icons.layers, title: '옥타브 폼', subtitle: 'CAGED 5폼',
+                  _StageCard(icon: Icons.layers, title: tr('home_octave'), subtitle: tr('home_octave_sub'),
                     color: const Color(0xFFE67E22),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OctaveSetup()))),
-                  _StageCard(icon: Icons.piano, title: '코드 연습', subtitle: '코드 체인지',
+                  _StageCard(icon: Icons.piano, title: tr('home_chord'), subtitle: tr('home_chord_sub'),
                     color: const Color(0xFF27AE60),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChordSetup()))),
-                  _StageCard(icon: Icons.queue_music, title: '스케일', subtitle: '스케일 연습',
+                  _StageCard(icon: Icons.queue_music, title: tr('home_scale'), subtitle: tr('home_scale_sub'),
                     color: const Color(0xFF2980B9),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScaleSetup()))),
-                  _StageCard(icon: Icons.tune, title: '튜너', subtitle: '기타 튜닝',
+                  _StageCard(icon: Icons.tune, title: tr('home_tuner'), subtitle: tr('home_tuner_sub'),
                     color: const Color(0xFF8E44AD),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TunerScreen()))),
-                  _StageCard(icon: Icons.timer, title: '메트로놈', subtitle: 'BPM 연습',
+                  _StageCard(icon: Icons.timer, title: tr('home_metronome'), subtitle: tr('home_metronome_sub'),
                     color: const Color(0xFFC0392B),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MetronomeScreen()))),
-                  _StageCard(icon: Icons.bar_chart, title: '연습 기록', subtitle: '이번주 통계',
+                  _StageCard(icon: Icons.bar_chart, title: tr('home_record'), subtitle: tr('home_record_sub'),
                     color: const Color(0xFF16A085),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PracticeStatsScreen()))),
-                  _StageCard(icon: Icons.settings, title: '설정', subtitle: '테마/언어',
+                  _StageCard(icon: Icons.settings, title: tr('home_settings'), subtitle: tr('home_settings_sub'),
                     color: Colors.grey,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()))),
                 ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/app_localizations.dart';
 
 void main() {
   runApp(const GuitarTeacherApp());
@@ -8,21 +9,26 @@ void main() {
 class GuitarTeacherApp extends StatefulWidget {
   const GuitarTeacherApp({super.key});
 
-  static _GuitarTeacherAppState? of(BuildContext context) {
-    return context.findAncestorStateOfType<_GuitarTeacherAppState>();
+  static GuitarTeacherAppState? of(BuildContext context) {
+    return context.findAncestorStateOfType<GuitarTeacherAppState>();
   }
 
   @override
-  State<GuitarTeacherApp> createState() => _GuitarTeacherAppState();
+  State<GuitarTeacherApp> createState() => GuitarTeacherAppState();
 }
 
-class _GuitarTeacherAppState extends State<GuitarTeacherApp> {
+class GuitarTeacherAppState extends State<GuitarTeacherApp> {
   bool _isDarkMode = false;
+  final AppLocalizations _loc = AppLocalizations();
 
   bool get isDarkMode => _isDarkMode;
 
   void toggleDarkMode() {
     setState(() => _isDarkMode = !_isDarkMode);
+  }
+
+  void setLocale(String code) {
+    setState(() => _loc.setLocale(code));
   }
 
   // Light theme - warm wood/apricot
@@ -85,13 +91,13 @@ class RateAppWrapper extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Enjoying Guitar Teacher? 🎸'),
-            content: const Column(
+            title: Text(tr('rate_title')),
+            content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('If you find this app helpful,\nplease rate us!'),
-                SizedBox(height: 16),
-                Row(
+                Text(tr('rate_body')),
+                const SizedBox(height: 16),
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.star, color: Colors.amber, size: 32),
@@ -106,11 +112,11 @@ class RateAppWrapper extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Later'),
+                child: Text(tr('later')),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Rate Now'),
+                child: Text(tr('rate_now')),
               ),
             ],
           ),

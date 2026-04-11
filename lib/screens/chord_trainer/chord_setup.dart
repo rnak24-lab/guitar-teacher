@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/app_localizations.dart';
 import 'chord_game.dart';
 
 class ChordSetup extends StatefulWidget {
@@ -16,7 +17,7 @@ class _ChordSetupState extends State<ChordSetup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('코드 연습 설정'),
+        title: Text(tr('chord_setup_title')),
         backgroundColor: const Color(0xFF8B6914),
         foregroundColor: Colors.white,
       ),
@@ -26,34 +27,34 @@ class _ChordSetupState extends State<ChordSetup> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('🎯 난이도', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
+            Text(tr('chord_difficulty'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
             const SizedBox(height: 12),
             _DifficultyCard(
-              title: '🟢 초급',
-              subtitle: 'C, G, D, Am, Em 등 오픈코드',
+              title: tr('chord_beginner'),
+              subtitle: tr('chord_beginner_desc'),
               selected: _difficulty == 'beginner',
               onTap: () => setState(() => _difficulty = 'beginner'),
             ),
             const SizedBox(height: 8),
             _DifficultyCard(
-              title: '🟡 중급',
-              subtitle: 'F, Bb, Fmaj7 등 바레/하이코드',
+              title: tr('chord_intermediate'),
+              subtitle: tr('chord_intermediate_desc'),
               selected: _difficulty == 'intermediate',
               onTap: () => setState(() => _difficulty = 'intermediate'),
             ),
             const SizedBox(height: 8),
             _DifficultyCard(
-              title: '🔴 고급',
-              subtitle: 'Cm7, Db9, Bm7b5 등 재즈코드',
+              title: tr('chord_advanced'),
+              subtitle: tr('chord_advanced_desc'),
               selected: _difficulty == 'advanced',
               onTap: () => setState(() => _difficulty = 'advanced'),
             ),
             const SizedBox(height: 24),
-            Text('⏱ 코드 변경: ${_seconds.toInt()}초',
+            Text(tr('chord_change_time').replaceAll('{n}', '${_seconds.toInt()}'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
             Slider(
               value: _seconds, min: 1, max: 30, divisions: 29,
-              label: '${_seconds.toInt()}초',
+              label: '${_seconds.toInt()}s',
               activeColor: const Color(0xFF8B6914),
               onChanged: (v) => setState(() => _seconds = v),
             ),
@@ -65,11 +66,10 @@ class _ChordSetupState extends State<ChordSetup> {
                   MaterialPageRoute(builder: (_) => ChordGame(
                     seconds: _seconds.toInt(), difficulty: _difficulty))),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B6914),
-                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFF8B6914), foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('시작!', style: TextStyle(fontSize: 24)),
+                child: Text(tr('start'), style: const TextStyle(fontSize: 24)),
               ),
             ),
             const SizedBox(height: 16),
