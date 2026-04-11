@@ -127,8 +127,6 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note Finder 🎵'),
-        backgroundColor: const Color(0xFF4A90D9),
-        foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           // Score display

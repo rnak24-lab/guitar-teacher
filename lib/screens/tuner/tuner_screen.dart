@@ -57,11 +57,8 @@ class _TunerScreenState extends State<TunerScreen> {
     final diff = _isListening ? _detectedFrequency - _targetFreq : 0.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAE5C8),
       appBar: AppBar(
-        title: const Text('튜너'),
-        backgroundColor: Colors.purple[700],
-        foregroundColor: Colors.white,
+        title: const Text('Tuner'),
         actions: [
           Row(
             children: [

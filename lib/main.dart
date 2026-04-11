@@ -41,9 +41,11 @@ class GuitarTeacherAppState extends State<GuitarTeacherApp> {
     scaffoldBackgroundColor: const Color(0xFFFAE5C8),
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF8B6914),
-      foregroundColor: Colors.white,
+      backgroundColor: Color(0xFFE8CFA8),  // slightly darker than apricot bg
+      foregroundColor: Color(0xFF5D3A00),
       centerTitle: true,
+      elevation: 0,
+      scrolledUnderElevation: 0.5,
     ),
   );
 
@@ -57,9 +59,11 @@ class GuitarTeacherAppState extends State<GuitarTeacherApp> {
     scaffoldBackgroundColor: const Color(0xFF121212),
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E1E1E),
-      foregroundColor: Colors.white,
+      backgroundColor: Color(0xFF1A1A1A),  // slightly darker than dark bg
+      foregroundColor: Color(0xFFE8CFA8),
       centerTitle: true,
+      elevation: 0,
+      scrolledUnderElevation: 0.5,
     ),
   );
 

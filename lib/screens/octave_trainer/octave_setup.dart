@@ -130,8 +130,6 @@ class _OctaveSetupState extends State<OctaveSetup> with TickerProviderStateMixin
     return Scaffold(
       appBar: AppBar(
         title: Text('${tr('home_octave')} 🎹'),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           // Help button

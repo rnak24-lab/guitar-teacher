@@ -85,11 +85,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
-        title: const Text('메트로놈'),
-        backgroundColor: const Color(0xFF2A2A2A),
-        foregroundColor: Colors.white,
+        title: const Text('Metronome'),
       ),
       body: Column(
         children: [

@@ -64,8 +64,6 @@ class _OctaveGameState extends State<OctaveGame> {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('octave_game_title')),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.help_outline),
           onPressed: () => showDialog(

@@ -18,10 +18,7 @@ class _ChordSetupState extends State<ChordSetup> {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('chord_setup_title')),
-        backgroundColor: const Color(0xFF8B6914),
-        foregroundColor: Colors.white,
       ),
-      backgroundColor: const Color(0xFFFAE5C8),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

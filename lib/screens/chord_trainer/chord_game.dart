@@ -75,11 +75,8 @@ class _ChordGameState extends State<ChordGame> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAE5C8),
       appBar: AppBar(
         title: Text('${tr('chord_game_title')} ($_diffLabel)'),
-        backgroundColor: const Color(0xFF8B6914),
-        foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           IconButton(icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
