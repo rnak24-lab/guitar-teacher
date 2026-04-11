@@ -8,6 +8,7 @@ import '../../services/practice_record.dart';
 import '../../services/pitch_detector.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../services/ad_service.dart';
+import '../../providers/note_name_provider.dart';
 
 /// Quiz Mode: Random scale quiz - identify/play scale notes
 /// Now supports microphone input: play the note on guitar instead of tapping fret buttons.
@@ -331,7 +332,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
               children: [
                 Text('Where is', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
                 const SizedBox(height: 4),
-                Text(_questionNote,
+                Text(NoteNameProvider().display(_questionNote),
                   style: TextStyle(
                     fontSize: 64, fontWeight: FontWeight.bold,
                     color: isMicCorrect ? Colors.green : const Color(0xFF8B6914),

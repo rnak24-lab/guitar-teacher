@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../main.dart';
 import '../../services/app_localizations.dart';
 import '../../services/notification_service.dart';
+import '../../providers/note_name_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,6 +15,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _reminderEnabled = false;
   int _reminderHour = 20;
   int _reminderMinute = 0;
+  String _noteSystem = NoteNameProvider().system;
 
   @override
   void initState() {
@@ -78,6 +80,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
             value: isDark,
             onChanged: (v) => appState?.toggleDarkMode(),
+          ),
+          // Note name system (alphabet / solfege)
+          ListTile(
+            leading: const Icon(Icons.music_note),
+            title: Text(tr('settings_note_system')),
+            subtitle: Text(
+              _noteSystem == 'solfege'
+                  ? tr('settings_note_solfege')
+                  : tr('settings_note_alphabet'),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showNoteSystemDialog(context),
           ),
           const Divider(),
 
@@ -212,6 +226,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case 'es': return '🇪🇸';
       default: return '🌐';
     }
+  }
+
+  void _showNoteSystemDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(tr('settings_note_system')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _noteSystemOption(ctx, 'alphabet', tr('settings_note_alphabet'), 'C - D - E - F - G - A - B'),
+            const SizedBox(height: 8),
+            _noteSystemOption(ctx, 'solfege', tr('settings_note_solfege'), 'Do - Re - Mi - Fa - Sol - La - Si'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _noteSystemOption(BuildContext ctx, String system, String label, String example) {
+    final isSelected = _noteSystem == system;
+    return ListTile(
+      leading: Icon(
+        isSelected ? Icons.check_circle : Icons.circle_outlined,
+        color: isSelected ? const Color(0xFF8B6914) : null,
+      ),
+      title: Text(label),
+      subtitle: Text(example, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+      onTap: () async {
+        await NoteNameProvider().setSystem(system);
+        setState(() => _noteSystem = system);
+        if (ctx.mounted) Navigator.pop(ctx);
+      },
+    );
   }
 
   void _showVolumeDialog(BuildContext context) {

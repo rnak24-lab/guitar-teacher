@@ -7,6 +7,7 @@ import '../../widgets/ad_banner_widget.dart';
 import '../../services/ad_service.dart';
 import '../../services/practice_record.dart';
 import '../../services/app_localizations.dart';
+import '../../providers/note_name_provider.dart';
 
 class ChordGame extends StatefulWidget {
   final int seconds;
@@ -120,7 +121,7 @@ class _ChordGameState extends State<ChordGame> {
                   if (_paused)
                     Text(tr('chord_pause'), style: const TextStyle(fontSize: 20, color: Colors.orange)),
                   const SizedBox(height: 8),
-                  Text(_currentChord.name,
+                  Text(NoteNameProvider().displayChord(_currentChord.name),
                     style: const TextStyle(fontSize: 140, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
                   Text(_currentChord.type, style: TextStyle(fontSize: 18, color: Colors.brown[400])),
                   const SizedBox(height: 8),
@@ -142,7 +143,7 @@ class _ChordGameState extends State<ChordGame> {
                   ),
                   const SizedBox(height: 16),
                   if (_nextChord != null)
-                    Text(tr('chord_next').replaceAll('{name}', _nextChord!.name),
+                    Text(tr('chord_next').replaceAll('{name}', NoteNameProvider().displayChord(_nextChord!.name)),
                       style: TextStyle(fontSize: 18, color: Colors.brown[300])),
                 ],
               ),

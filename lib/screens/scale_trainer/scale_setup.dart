@@ -4,6 +4,7 @@ import '../../models/note.dart';
 import '../../models/scale.dart';
 import 'scale_practice.dart';
 import 'scale_quiz.dart';
+import '../../providers/note_name_provider.dart';
 
 /// Circle-of-fourths order: C F Bb Eb Ab Db Gb B E A D G
 const _circleOf4ths = ['C','F','Bb','Eb','Ab','Db','Gb','B','E','A','D','G'];
@@ -85,7 +86,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
                     spacing: 8,
                     runSpacing: 8,
                     children: _orderedNotes.map((note) => ChoiceChip(
-                      label: Text(note,
+                      label: Text(NoteNameProvider().display(note),
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       selected: _selectedRoot == note,
                       selectedColor: accent,
@@ -159,7 +160,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        '(${_selectedRoot}$_octave)',
+                        '(${NoteNameProvider().display(_selectedRoot)}$_octave)',
                         style: TextStyle(
                           fontSize: 16,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -286,7 +287,8 @@ class _ScaleSetupState extends State<ScaleSetup> {
   }
 
   String _scaleFormula(ScaleData scale) {
-    return scale.notesForRoot(_selectedRoot).join(' - ');
+    final nn = NoteNameProvider();
+    return scale.notesForRoot(_selectedRoot).map((n) => nn.display(n)).join(' - ');
   }
 
   void _openPractice() {

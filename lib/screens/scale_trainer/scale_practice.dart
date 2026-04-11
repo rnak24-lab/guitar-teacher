@@ -5,6 +5,7 @@ import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../services/pitch_detector.dart';
+import '../../providers/note_name_provider.dart';
 
 /// Practice Mode: Shows scale notes highlighted on fretboard
 /// Now with microphone support — play the correct note to advance.
@@ -211,7 +212,7 @@ class _ScalePracticeState extends State<ScalePractice> {
                     const Spacer(),
                     if (currentTarget != null)
                       Text(
-                        'Target: $currentTarget',
+                        'Target: ${NoteNameProvider().display(currentTarget)}',
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                   ] else
@@ -243,7 +244,7 @@ class _ScalePracticeState extends State<ScalePractice> {
                 return GestureDetector(
                   onTap: () => setState(() => _currentNoteIndex = _currentNoteIndex == e.key ? -1 : e.key),
                   child: Chip(
-                    label: Text(e.value,
+                    label: Text(NoteNameProvider().display(e.value),
                       style: TextStyle(
                         color: isActive ? Colors.white : Colors.grey,
                         fontWeight: isRoot ? FontWeight.bold : FontWeight.normal,
@@ -356,6 +357,7 @@ class _ScalePracticeState extends State<ScalePractice> {
           leftPad: leftPad,
           topPad: topPad,
           matchedNote: _noteMatched && _currentNoteIndex >= 0 ? _scaleNotes[_currentNoteIndex] : null,
+          noteNameProvider: NoteNameProvider(),
         ),
       ),
     );
@@ -373,6 +375,7 @@ class _ScaleFretboardPainter extends CustomPainter {
   final bool isDark;
   final double cellW, cellH, leftPad, topPad;
   final String? matchedNote;
+  final NoteNameProvider noteNameProvider;
 
   _ScaleFretboardPainter({
     required this.strings,
@@ -388,6 +391,7 @@ class _ScaleFretboardPainter extends CustomPainter {
     required this.leftPad,
     required this.topPad,
     this.matchedNote,
+    required this.noteNameProvider,
   });
 
   @override
@@ -471,7 +475,7 @@ class _ScaleFretboardPainter extends CustomPainter {
           if (showNames) {
             final tp = TextPainter(
               text: TextSpan(
-                text: noteAtFret,
+                text: noteNameProvider.display(noteAtFret),
                 style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
               ),
               textDirection: TextDirection.ltr,

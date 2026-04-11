@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/pitch_detector.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../data/tuning_presets.dart';
+import '../../providers/note_name_provider.dart';
 
 class TunerScreen extends StatefulWidget {
   const TunerScreen({super.key});
@@ -224,7 +225,7 @@ class _TunerScreenState extends State<TunerScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      s.substring(1),
+                      NoteNameProvider().display(s.substring(1)),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -275,7 +276,7 @@ class _TunerScreenState extends State<TunerScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _selectedString.substring(1),
+                      NoteNameProvider().display(_selectedString.substring(1)),
                       style: TextStyle(
                         fontSize: 64,
                         fontWeight: FontWeight.bold,

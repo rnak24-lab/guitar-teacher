@@ -4,12 +4,14 @@ import 'screens/tutorial/tutorial_screen.dart';
 import 'services/app_localizations.dart';
 import 'services/notification_service.dart';
 import 'services/ad_service.dart';
+import 'providers/note_name_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().init();
   await NotificationService().restoreIfEnabled();
   await AdService().init();
+  await NoteNameProvider().init();
   runApp(const GuitarTeacherApp());
 }
 

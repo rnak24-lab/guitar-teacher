@@ -86,6 +86,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': 'Rate This App',
       'settings_share': 'Share This App',
+      'settings_note_system': 'Note Names',
+      'settings_note_alphabet': 'Alphabet (C-D-E)',
+      'settings_note_solfege': 'Solfege (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': 'Fretboard Setup',
@@ -230,6 +233,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': '앱 평점 남기기',
       'settings_share': '앱 공유하기',
+      'settings_note_system': '음표 표기',
+      'settings_note_alphabet': '알파벳 (C-D-E)',
+      'settings_note_solfege': '도레미 (Do-Re-Mi)',
       'fretboard_setup_title': '프렛보드 연습 설정',
       'fretboard_time': '⏱ 시간 설정 (초)',
       'fretboard_time_desc': '{n}초마다 새 음이 나옵니다',
@@ -367,6 +373,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': 'アプリを評価',
       'settings_share': 'アプリを共有',
+      'settings_note_system': '音名表記',
+      'settings_note_alphabet': 'アルファベット (C-D-E)',
+      'settings_note_solfege': 'ドレミ (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': 'フレットボード設定',
@@ -518,6 +527,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': '评价此应用',
       'settings_share': '分享此应用',
+      'settings_note_system': '音名显示',
+      'settings_note_alphabet': '字母 (C-D-E)',
+      'settings_note_solfege': '唱名 (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': '指板练习设置',
@@ -669,6 +681,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': 'Đánh giá ứng dụng',
       'settings_share': 'Chia sẻ ứng dụng',
+      'settings_note_system': 'Ký hiệu nốt nhạc',
+      'settings_note_alphabet': 'Bảng chữ cái (C-D-E)',
+      'settings_note_solfege': 'Xướng âm (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': 'Thiết lập phím đàn',
@@ -820,6 +835,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': 'Noter l\'application',
       'settings_share': 'Partager l\'application',
+      'settings_note_system': 'Notation des notes',
+      'settings_note_alphabet': 'Lettres (C-D-E)',
+      'settings_note_solfege': 'Solfege (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': 'Configuration du manche',
@@ -971,6 +989,9 @@ class AppLocalizations extends ChangeNotifier {
       'settings_version': 'v1.1.0 by Endolphin Studio',
       'settings_rate': 'Valorar la app',
       'settings_share': 'Compartir la app',
+      'settings_note_system': 'Notacion de notas',
+      'settings_note_alphabet': 'Letras (C-D-E)',
+      'settings_note_solfege': 'Solfeo (Do-Re-Mi)',
 
       // Fretboard trainer
       'fretboard_setup_title': 'Configurar diapasón',

@@ -7,6 +7,7 @@ import '../../widgets/ad_banner_widget.dart';
 import '../../services/ad_service.dart';
 import '../../services/practice_record.dart';
 import '../../services/app_localizations.dart';
+import '../../providers/note_name_provider.dart';
 
 class FretboardGame extends StatefulWidget {
   final int seconds;
@@ -98,6 +99,7 @@ class _FretboardGameState extends State<FretboardGame> {
     final openNote = _currentQuestion['openNote'] as String;
     final correctFrets = _currentQuestion['correctFrets'] as List<int>;
     final gs = GuitarString.standard[stringNum - 1];
+    final nn = NoteNameProvider();
 
     return Scaffold(
       appBar: AppBar(
@@ -134,7 +136,7 @@ class _FretboardGameState extends State<FretboardGame> {
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
           Text(
-            note,
+            nn.display(note),
             style: const TextStyle(
               fontSize: 72,
               fontWeight: FontWeight.bold,
@@ -187,7 +189,7 @@ class _FretboardGameState extends State<FretboardGame> {
                           ),
                           if (_showAnswer)
                             Text(
-                              noteAtFret,
+                              nn.display(noteAtFret),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isCorrect ? Colors.green[800] : Colors.grey,
