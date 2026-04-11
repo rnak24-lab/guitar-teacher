@@ -28,10 +28,10 @@ class ChordDiagramWidget extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(12 * size),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+            color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0E4CC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark ? Colors.grey[700]! : const Color(0xFF8B6914),
+              color: isDark ? Colors.grey[700]! : const Color(0xFFC8A878),
               width: 1.5,
             ),
           ),
@@ -44,7 +44,7 @@ class ChordDiagramWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20 * size,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF5D3A00),
+                  color: isDark ? Colors.white : const Color(0xFF3D2B1F),
                 ),
               ),
               SizedBox(height: 4 * size),
@@ -75,12 +75,12 @@ class ChordDiagramWidget extends StatelessWidget {
                 width: 22 * size,
                 height: 22 * size,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[700] : Colors.grey[300],
+                  color: isDark ? Colors.grey[700] : const Color(0xFFE8D5B0),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.help_outline,
                     size: 14 * size,
-                    color: isDark ? Colors.white70 : Colors.grey[700]),
+                    color: isDark ? Colors.white70 : const Color(0xFF7A5C3E)),
               ),
             ),
           ),
@@ -210,7 +210,7 @@ class _FretboardPainter extends CustomPainter {
     final stringPaint = Paint()..color = lineColor..strokeWidth = 1.0;
     final fretPaint = Paint()..color = lineColor..strokeWidth = 1.5;
     final nutPaint = Paint()..color = nutColor..strokeWidth = 3.0;
-    final dotPaint = Paint()..color = const Color(0xFF8B6914);
+    final dotPaint = Paint()..color = const Color(0xFFD4A017);
 
     // Draw nut (if starting from fret 1)
     if (startFret == 1) {
@@ -250,7 +250,7 @@ class _FretboardPainter extends CustomPainter {
       final barreY = topPad + (barFret! - startFret + 0.5) * cellH;
       if (barreY >= topPad && barreY <= topPad + cellH * numFrets) {
         final barPaint = Paint()
-          ..color = const Color(0xFF8B6914).withValues(alpha: 0.4)
+          ..color = const Color(0xFFD4A017).withValues(alpha: 0.4)
           ..strokeWidth = 8 * size
           ..strokeCap = StrokeCap.round;
         final firstStr = frets.indexWhere((f) => f == barFret);
@@ -275,7 +275,7 @@ class _FretboardPainter extends CustomPainter {
         final tp = TextPainter(
           text: TextSpan(
             text: 'X',
-            style: TextStyle(fontSize: 12 * size, color: Colors.grey[600], fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 12 * size, color: const Color(0xFFCC3333), fontWeight: FontWeight.bold),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -285,12 +285,7 @@ class _FretboardPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(x, topPad - 8 * size),
           5 * size,
-          Paint()..color = Colors.transparent..style = PaintingStyle.stroke..strokeWidth = 1.5,
-        );
-        canvas.drawCircle(
-          Offset(x, topPad - 8 * size),
-          5 * size,
-          Paint()..color = isDark ? Colors.green[300]! : Colors.green..style = PaintingStyle.stroke..strokeWidth = 1.5,
+          Paint()..color = isDark ? Colors.green[300]! : const Color(0xFF7A5C3E)..style = PaintingStyle.stroke..strokeWidth = 1.5,
         );
       } else {
         // Fingered dot
