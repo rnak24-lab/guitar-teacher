@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'app_localizations.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -19,6 +20,23 @@ class NotificationService {
   static const _keyEnabled = 'reminder_enabled';
   static const _keyHour = 'reminder_hour';
   static const _keyMinute = 'reminder_minute';
+
+  /// Localized notification body messages keyed by language code.
+  static const Map<String, String> _localizedBody = {
+    'ko': '오늘 기타 연습 했나요? 함께 연습해요!',
+    'ja': '今日ギターの練習はしましたか？一緒に練習しましょう！',
+    'zh': '今天练吉他了吗？一起来练习吧！',
+    'vi': 'Hom nay ban da tap guitar chua? Hay cung tap nao!',
+    'fr': 'Avez-vous pratique la guitare aujourd\'hui ? Jouons ensemble !',
+    'es': 'Practicaste guitarra hoy? Toquemos juntos!',
+    'en': 'Did you practice guitar today? Let\'s play together!',
+  };
+
+  /// Get the notification body in the current app language.
+  String _getLocalizedBody() {
+    final lang = AppLocalizations().locale;
+    return _localizedBody[lang] ?? _localizedBody['en']!;
+  }
 
   Future<void> init() async {
     tzdata.initializeTimeZones();
@@ -74,6 +92,8 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
+    final body = _getLocalizedBody();
+
     const androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
@@ -90,7 +110,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       _notifId,
       'Guitar Educator',
-      'Time to practice guitar! Let\'s play today.',
+      body,
       scheduled,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -98,8 +118,16 @@ class NotificationService {
     );
   }
 
-  /// Re-schedule on app start if enabled.
+  /// Re-schedule on app start if enabled (picks current locale).
   Future<void> restoreIfEnabled() async {
+    final s = await getSettings();
+    if (s.enabled) {
+      await _scheduleDailyNotification(s.hour, s.minute);
+    }
+  }
+
+  /// Call when user changes app language so notification text updates.
+  Future<void> refreshLocale() async {
     final s = await getSettings();
     if (s.enabled) {
       await _scheduleDailyNotification(s.hour, s.minute);

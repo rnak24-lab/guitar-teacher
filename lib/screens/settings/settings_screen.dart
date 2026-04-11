@@ -123,13 +123,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
 
           // === Practice Reminder ===
-          _SectionHeader(title: 'Practice Reminder'),
+          _SectionHeader(title: tr('settings_reminder')),
           SwitchListTile(
-            title: const Text('Daily Reminder'),
+            title: Text(tr('settings_daily_reminder')),
             subtitle: Text(
               _reminderEnabled
-                  ? 'Every day at ${_reminderHour.toString().padLeft(2, '0')}:${_reminderMinute.toString().padLeft(2, '0')}'
-                  : 'Off',
+                  ? '${tr('settings_reminder_every_day')} ${_reminderHour.toString().padLeft(2, '0')}:${_reminderMinute.toString().padLeft(2, '0')}'
+                  : tr('settings_off'),
             ),
             secondary: Icon(
               _reminderEnabled
@@ -142,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (_reminderEnabled)
             ListTile(
               leading: const Icon(Icons.access_time),
-              title: const Text('Reminder Time'),
+              title: Text(tr('settings_reminder_time')),
               subtitle: Text(
                 '${_reminderHour.toString().padLeft(2, '0')}:${_reminderMinute.toString().padLeft(2, '0')}',
               ),
@@ -173,6 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : null,
               onTap: () {
                 appState?.setLocale(entry.key);
+                NotificationService().refreshLocale();
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
               },
@@ -333,7 +334,11 @@ class _PrivacyPolicyScreen extends StatelessWidget {
             ),
             _PolicySection(
               title: 'Advertising',
-              body: 'No advertising SDK is currently integrated into the app.',
+              body: 'Guitar Educator uses Google AdMob to display ads. '
+                  'AdMob may collect device identifiers and usage data '
+                  'to serve personalized or non-personalized ads. '
+                  'You can manage ad preferences in your device settings. '
+                  'For more information, see Google\'s Privacy Policy.',
             ),
             _PolicySection(
               title: 'Contact',
