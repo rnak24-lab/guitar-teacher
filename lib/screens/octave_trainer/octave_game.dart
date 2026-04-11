@@ -122,7 +122,9 @@ class _OctaveGameState extends State<OctaveGame> {
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        form.description,
+                        AppLocalizations().locale == 'ko'
+                            ? form.descriptionKo
+                            : form.description,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 14),
                       ),

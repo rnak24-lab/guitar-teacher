@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/octave_form.dart';
+import '../../services/app_localizations.dart';
 
 class FormInfoDialog extends StatelessWidget {
   const FormInfoDialog({super.key});
@@ -84,7 +85,10 @@ class _FormCard extends StatelessWidget {
               children: [
                 Text(form.cagedName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
-                Text(form.description, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(
+                  AppLocalizations().locale == 'ko' ? form.descriptionKo : form.description,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
               ],
             ),
           ),
