@@ -102,6 +102,15 @@ class SettingsScreen extends StatelessWidget {
               // TODO: Share function
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const _PrivacyPolicyScreen()),
+            ),
+          ),
         ],
       ),
     );
@@ -145,6 +154,82 @@ class SettingsScreen extends StatelessWidget {
       title: Text(label),
       trailing: selected ? const Icon(Icons.check, color: Color(0xFF8B6914)) : null,
       onTap: () => Navigator.pop(ctx),
+    );
+  }
+}
+
+class _PrivacyPolicyScreen extends StatelessWidget {
+  const _PrivacyPolicyScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Privacy Policy')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'Privacy Policy',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Last updated: April 2025',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            SizedBox(height: 20),
+            _PolicySection(
+              title: 'Data Collection',
+              body: 'Guitar Educator does not collect any personal data. '
+                  'We do not require account creation, and no personally '
+                  'identifiable information is gathered.',
+            ),
+            _PolicySection(
+              title: 'Local Storage',
+              body: 'Your practice records and app preferences are stored '
+                  'locally on your device only (using SharedPreferences). '
+                  'This data never leaves your device.',
+            ),
+            _PolicySection(
+              title: 'Network & Servers',
+              body: 'No data is transmitted to external servers. '
+                  'Guitar Educator operates entirely offline.',
+            ),
+            _PolicySection(
+              title: 'Advertising',
+              body: 'No advertising SDK is currently integrated into the app.',
+            ),
+            _PolicySection(
+              title: 'Contact',
+              body: 'If you have any questions about this Privacy Policy, '
+                  'please contact us at rnak24@gmail.com.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PolicySection extends StatelessWidget {
+  final String title;
+  final String body;
+  const _PolicySection({required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Text(body, style: const TextStyle(fontSize: 14, height: 1.5)),
+        ],
+      ),
     );
   }
 }
