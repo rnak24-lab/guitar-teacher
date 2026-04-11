@@ -27,6 +27,11 @@ class _ChordGameState extends State<ChordGame> {
   bool _showAnswer = false;
   final Stopwatch _stopwatch = Stopwatch();
 
+  // Auto-show diagram settings
+  bool _autoShowDiagram = false;
+  int _autoShowDelay = 2; // seconds
+  Timer? _autoShowTimer;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +46,16 @@ class _ChordGameState extends State<ChordGame> {
     _nextChord = _chords[_random.nextInt(_chords.length)];
     _timeLeft = widget.seconds;
     _showAnswer = false;
+    _autoShowTimer?.cancel();
+    if (_autoShowDiagram) {
+      if (_autoShowDelay == 0) {
+        _showAnswer = true;
+      } else {
+        _autoShowTimer = Timer(Duration(seconds: _autoShowDelay), () {
+          if (mounted && !_paused) setState(() => _showAnswer = true);
+        });
+      }
+    }
     setState(() {});
   }
 
@@ -70,7 +85,7 @@ class _ChordGameState extends State<ChordGame> {
   }
 
   @override
-  void dispose() { _timer?.cancel(); super.dispose(); }
+  void dispose() { _timer?.cancel(); _autoShowTimer?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +118,7 @@ class _ChordGameState extends State<ChordGame> {
                     Text(tr('chord_pause'), style: const TextStyle(fontSize: 20, color: Colors.orange)),
                   const SizedBox(height: 8),
                   Text(_currentChord.name,
-                    style: const TextStyle(fontSize: 100, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
+                    style: const TextStyle(fontSize: 140, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
                   Text(_currentChord.type, style: TextStyle(fontSize: 18, color: Colors.brown[400])),
                   const SizedBox(height: 8),
                   if (!_paused)
@@ -128,6 +143,46 @@ class _ChordGameState extends State<ChordGame> {
                       style: TextStyle(fontSize: 18, color: Colors.brown[300])),
                 ],
               ),
+            ),
+          ),
+          // Auto-show diagram settings
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              border: Border(top: BorderSide(color: Colors.grey[300]!)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome, size: 18, color: Color(0xFF8B6914)),
+                const SizedBox(width: 8),
+                const Text('Auto Diagram', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                Switch(
+                  value: _autoShowDiagram,
+                  activeColor: const Color(0xFF8B6914),
+                  onChanged: (v) => setState(() => _autoShowDiagram = v),
+                ),
+                if (_autoShowDiagram) ...[
+                  const Text('Delay:', style: TextStyle(fontSize: 12)),
+                  const SizedBox(width: 4),
+                  ...[0, 1, 2, 3].map((s) => Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _autoShowDelay = s),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _autoShowDelay == s ? const Color(0xFF8B6914) : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('${s}s', style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold,
+                          color: _autoShowDelay == s ? Colors.white : Colors.grey[700])),
+                      ),
+                    ),
+                  )),
+                ],
+              ],
             ),
           ),
           Container(height: 50, width: double.infinity, color: Colors.grey[200],

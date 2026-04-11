@@ -34,6 +34,11 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
   List<int> _correctFrets = [];
   final Stopwatch _stopwatch = Stopwatch();
 
+  // Auto-reveal answer settings
+  bool _autoRevealAnswer = false;
+  int _autoRevealDelay = 2; // seconds
+  Timer? _autoRevealTimer;
+
   // Animation
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -59,8 +64,20 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
 
     _timeLeft = _seconds.toInt();
     _showAnswer = false;
+    _autoRevealTimer?.cancel();
 
     _fadeController.forward(from: 0);
+
+    // Auto-reveal answer if enabled
+    if (_autoRevealAnswer) {
+      if (_autoRevealDelay == 0) {
+        _showAnswer = true;
+      } else {
+        _autoRevealTimer = Timer(Duration(seconds: _autoRevealDelay), () {
+          if (mounted) setState(() => _showAnswer = true);
+        });
+      }
+    }
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -129,6 +146,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
   @override
   void dispose() {
     _timer?.cancel();
+    _autoRevealTimer?.cancel();
     _fadeController.dispose();
     super.dispose();
   }
@@ -191,7 +209,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                     Text('Play', style: TextStyle(fontSize: 28, color: Colors.grey[500])),
                     Text(
                       _currentNote,
-                      style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF4A90D9), height: 1.1),
+                      style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Color(0xFF4A90D9), height: 1.1),
                     ),
                     const SizedBox(height: 4),
                     // Timer countdown
@@ -338,6 +356,39 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                         activeColor: const Color(0xFF4A90D9),
                         onChanged: (v) => setState(() => _soundEnabled = v),
                       ),
+                    ],
+                  ),
+                  // Auto-reveal answer setting
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, size: 18, color: Color(0xFF4A90D9)),
+                      const SizedBox(width: 8),
+                      const Text('Auto Reveal'),
+                      Switch(
+                        value: _autoRevealAnswer,
+                        activeColor: const Color(0xFF4A90D9),
+                        onChanged: (v) => setState(() => _autoRevealAnswer = v),
+                      ),
+                      if (_autoRevealAnswer) ...[
+                        const Text('Delay:', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        ...[0, 1, 2, 3].map((s) => Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _autoRevealDelay = s),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _autoRevealDelay == s ? const Color(0xFF4A90D9) : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('${s}s', style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold,
+                                color: _autoRevealDelay == s ? Colors.white : Colors.grey[700])),
+                            ),
+                          ),
+                        )),
+                      ],
                     ],
                   ),
                 ],

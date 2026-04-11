@@ -200,7 +200,7 @@ class _OctaveSetupState extends State<OctaveSetup> with TickerProviderStateMixin
                       Text('Play', style: TextStyle(fontSize: 24, color: Colors.grey[500])),
                       Text(
                         _currentNote,
-                        style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Colors.orange, height: 1.1),
+                        style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Colors.orange, height: 1.1),
                       ),
                       const SizedBox(height: 8),
                       // Timer
