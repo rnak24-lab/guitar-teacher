@@ -112,6 +112,20 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     if (mounted) Navigator.pop(context);
   }
 
+  Widget _stepBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 30, height: 30,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: Colors.grey[700]),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -252,19 +266,44 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Time
+                  // Time presets + stepper
                   Row(
                     children: [
                       const Icon(Icons.timer, size: 18),
-                      const SizedBox(width: 8),
-                      Text('${_seconds.toInt()}s', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Expanded(
-                        child: Slider(
-                          value: _seconds, min: 1, max: 30, divisions: 29,
-                          activeColor: const Color(0xFF4A90D9),
-                          onChanged: (v) => setState(() => _seconds = v),
-                        ),
+                      const SizedBox(width: 6),
+                      // - button
+                      _stepBtn(Icons.remove, () {
+                        if (_seconds > 1) setState(() => _seconds--);
+                      }),
+                      // Current value
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('${_seconds.toInt()}s',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
+                      // + button
+                      _stepBtn(Icons.add, () {
+                        if (_seconds < 60) setState(() => _seconds++);
+                      }),
+                      const SizedBox(width: 8),
+                      // Preset chips
+                      ...[3, 5, 8, 10, 15].map((s) => Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _seconds = s.toDouble()),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _seconds.toInt() == s
+                                  ? const Color(0xFF8B6914) : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('${s}s', style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold,
+                              color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
+                          ),
+                        ),
+                      )),
                     ],
                   ),
                   // Strings

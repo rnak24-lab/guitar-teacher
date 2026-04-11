@@ -48,12 +48,40 @@ class _ChordSetupState extends State<ChordSetup> {
             ),
             const SizedBox(height: 24),
             Text(tr('chord_change_time').replaceAll('{n}', '${_seconds.toInt()}'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
-            Slider(
-              value: _seconds, min: 1, max: 30, divisions: 29,
-              label: '${_seconds.toInt()}s',
-              activeColor: const Color(0xFF8B6914),
-              onChanged: (v) => setState(() => _seconds = v),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5D3A00))),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _stepBtn(Icons.remove, () {
+                  if (_seconds > 1) setState(() => _seconds--);
+                }),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('${_seconds.toInt()}s',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                ),
+                _stepBtn(Icons.add, () {
+                  if (_seconds < 60) setState(() => _seconds++);
+                }),
+                const SizedBox(width: 12),
+                ...[3, 5, 8, 10, 15].map((s) => Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _seconds = s.toDouble()),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _seconds.toInt() == s
+                            ? const Color(0xFF8B6914) : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text('${s}s', style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.bold,
+                        color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
+                    ),
+                  ),
+                )),
+              ],
             ),
             const Spacer(),
             SizedBox(
@@ -74,6 +102,20 @@ class _ChordSetupState extends State<ChordSetup> {
               child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11)))),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _stepBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32, height: 32,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: Colors.grey[700]),
       ),
     );
   }
