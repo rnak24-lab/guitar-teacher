@@ -39,6 +39,10 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   final AudioPlayer _highPlayer = AudioPlayer();
   final AudioPlayer _lowPlayer = AudioPlayer();
 
+  // ── Tap Tempo state ──
+  final List<int> _tapTimestamps = [];
+  static const _tapResetMs = 3000; // reset after 3s silence
+
   // Time signatures
   static const _signatures = [2, 3, 4, 6];
   static const _sigLabels = ['2/4', '3/4', '4/4', '6/8'];
@@ -146,6 +150,30 @@ class _MetronomeScreenState extends State<MetronomeScreen>
     _savePreferences();
   }
 
+  void _onTapTempo() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // Reset if gap > 3 seconds
+    if (_tapTimestamps.isNotEmpty && now - _tapTimestamps.last > _tapResetMs) {
+      _tapTimestamps.clear();
+    }
+    _tapTimestamps.add(now);
+    if (_tapTimestamps.length < 2) return;
+
+    // Keep only last 8 taps for averaging
+    if (_tapTimestamps.length > 8) {
+      _tapTimestamps.removeAt(0);
+    }
+
+    // Calculate average interval
+    int totalInterval = 0;
+    for (int i = 1; i < _tapTimestamps.length; i++) {
+      totalInterval += _tapTimestamps[i] - _tapTimestamps[i - 1];
+    }
+    final avgMs = totalInterval / (_tapTimestamps.length - 1);
+    final tapBpm = (60000 / avgMs).round().clamp(20, 300);
+    _setBpm(tapBpm);
+  }
+
   void _showBpmKeypad() async {
     final controller = TextEditingController(text: '$_bpm');
     final result = await showDialog<int>(
@@ -231,7 +259,11 @@ class _MetronomeScreenState extends State<MetronomeScreen>
 
                     // ── BPM display ──
                     _buildBpmSection(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+
+                    // ── Tap Tempo button ──
+                    _buildTapTempoButton(),
+                    const SizedBox(height: 12),
 
                     // ── Beat indicators ──
                     _buildBeatIndicators(),
@@ -422,6 +454,52 @@ class _MetronomeScreenState extends State<MetronomeScreen>
           color: Colors.transparent,
         ),
         child: Icon(icon, color: _C.gold, size: 20),
+      ),
+    );
+  }
+
+  // ── Tap Tempo Button ──
+  Widget _buildTapTempoButton() {
+    return GestureDetector(
+      onTap: _onTapTempo,
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: _C.btnInactiveBg,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _C.gold, width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.touch_app, color: _C.gold, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'TAP',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _C.gold,
+              ),
+            ),
+            if (_tapTimestamps.length >= 2) ...[
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _C.gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_tapTimestamps.length - 1} taps',
+                  style: TextStyle(fontSize: 11, color: _C.textSecondary),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

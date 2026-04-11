@@ -1,9 +1,65 @@
 import 'package:flutter/material.dart';
 import '../../main.dart';
 import '../../services/app_localizations.dart';
+import '../../services/notification_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _reminderEnabled = false;
+  int _reminderHour = 20;
+  int _reminderMinute = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderSettings();
+  }
+
+  Future<void> _loadReminderSettings() async {
+    final s = await NotificationService().getSettings();
+    if (mounted) {
+      setState(() {
+        _reminderEnabled = s.enabled;
+        _reminderHour = s.hour;
+        _reminderMinute = s.minute;
+      });
+    }
+  }
+
+  Future<void> _toggleReminder(bool enabled) async {
+    setState(() => _reminderEnabled = enabled);
+    await NotificationService().setReminder(
+      enabled: enabled,
+      hour: _reminderHour,
+      minute: _reminderMinute,
+    );
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _reminderHour, minute: _reminderMinute),
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderHour = picked.hour;
+        _reminderMinute = picked.minute;
+      });
+      if (_reminderEnabled) {
+        await NotificationService().setReminder(
+          enabled: true,
+          hour: picked.hour,
+          minute: picked.minute,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +106,35 @@ class SettingsScreen extends StatelessWidget {
             ),
             isThreeLine: true,
           ),
+          const Divider(),
+
+          // === Practice Reminder ===
+          _SectionHeader(title: 'Practice Reminder'),
+          SwitchListTile(
+            title: const Text('Daily Reminder'),
+            subtitle: Text(
+              _reminderEnabled
+                  ? 'Every day at ${_reminderHour.toString().padLeft(2, '0')}:${_reminderMinute.toString().padLeft(2, '0')}'
+                  : 'Off',
+            ),
+            secondary: Icon(
+              _reminderEnabled
+                  ? Icons.notifications_active
+                  : Icons.notifications_off_outlined,
+            ),
+            value: _reminderEnabled,
+            onChanged: _toggleReminder,
+          ),
+          if (_reminderEnabled)
+            ListTile(
+              leading: const Icon(Icons.access_time),
+              title: const Text('Reminder Time'),
+              subtitle: Text(
+                '${_reminderHour.toString().padLeft(2, '0')}:${_reminderMinute.toString().padLeft(2, '0')}',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _pickReminderTime,
+            ),
           const Divider(),
 
           // === Guitar Settings ===

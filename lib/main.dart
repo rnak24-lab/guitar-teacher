@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/tutorial/tutorial_screen.dart';
 import 'services/app_localizations.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
+  await NotificationService().restoreIfEnabled();
   runApp(const GuitarTeacherApp());
 }
 

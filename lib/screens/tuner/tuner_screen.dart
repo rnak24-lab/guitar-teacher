@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/pitch_detector.dart';
+import '../../data/tuning_presets.dart';
 
 class TunerScreen extends StatefulWidget {
   const TunerScreen({super.key});
@@ -11,17 +13,10 @@ class TunerScreen extends StatefulWidget {
 }
 
 class _TunerScreenState extends State<TunerScreen> {
-  // Standard tuning frequencies
-  static const Map<String, double> standardTuning = {
-    '6E': 82.41,
-    '5A': 110.00,
-    '4D': 146.83,
-    '3G': 196.00,
-    '2B': 246.94,
-    '1E': 329.63,
-  };
-
-  final List<String> _stringOrder = ['6E', '5A', '4D', '3G', '2B', '1E'];
+  // Tuning preset support
+  TuningPreset _currentTuning = TuningPreset.all[0];
+  late Map<String, double> _tuningMap;
+  late List<String> _stringOrder;
 
   String _selectedString = '6E';
   double _detectedFrequency = 0;
@@ -36,11 +31,13 @@ class _TunerScreenState extends State<TunerScreen> {
   @override
   void initState() {
     super.initState();
+    _applyTuning(_currentTuning);
+    _loadTuningPreference();
     _pitchDetector.onPitchDetected = (freq, noteName, cents) {
       if (!mounted) return;
       setState(() {
         _detectedFrequency = freq;
-        _cents = PitchDetector.calculateCents(freq, standardTuning[_selectedString]!);
+        _cents = PitchDetector.calculateCents(freq, _tuningMap[_selectedString]!);
 
         // Auto advance: within 5 cents
         if (_autoAdvance && _cents.abs() < 5) {
@@ -120,7 +117,28 @@ class _TunerScreenState extends State<TunerScreen> {
     }
   }
 
-  double get _targetFreq => standardTuning[_selectedString]!;
+  void _applyTuning(TuningPreset preset) {
+    _currentTuning = preset;
+    _tuningMap = preset.toFrequencyMap();
+    _stringOrder = preset.stringLabels;
+    _selectedString = _stringOrder[0];
+    _currentStringIndex = 0;
+  }
+
+  Future<void> _loadTuningPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('tuner_preset') ?? 'Standard';
+    final preset = TuningPreset.byName(name);
+    setState(() => _applyTuning(preset));
+  }
+
+  Future<void> _changeTuning(TuningPreset preset) async {
+    setState(() => _applyTuning(preset));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('tuner_preset', preset.name);
+  }
+
+  double get _targetFreq => _tuningMap[_selectedString]!;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +163,47 @@ class _TunerScreenState extends State<TunerScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
+          // ── Tuning preset selector ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E4CC),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFD4A017), width: 1.5),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _currentTuning.name,
+                  isExpanded: true,
+                  icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFD4A017)),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF3D2B1F),
+                  ),
+                  dropdownColor: const Color(0xFFF0E4CC),
+                  items: TuningPreset.all.map((preset) {
+                    return DropdownMenuItem<String>(
+                      value: preset.name,
+                      child: Text(
+                        '${preset.name}  (${preset.notes.join("-")})',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (name) {
+                    if (name != null) {
+                      _changeTuning(TuningPreset.byName(name));
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
 
           // String selection buttons
           Row(
