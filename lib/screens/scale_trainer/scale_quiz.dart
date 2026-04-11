@@ -31,7 +31,6 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   late List<String> _scaleNotes;
 
   // Quiz state
-  int _questionIndex = 0;
   int _totalQuestions = 0;
   int _correctAnswers = 0;
   bool _showAnswer = false;

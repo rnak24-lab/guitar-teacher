@@ -24,7 +24,6 @@ class _ChordGameState extends State<ChordGame> {
   int _timeLeft = 0;
   bool _paused = false;
   bool _showAnswer = false;
-  int _totalCount = 0;
   final Stopwatch _stopwatch = Stopwatch();
 
   @override
@@ -41,7 +40,6 @@ class _ChordGameState extends State<ChordGame> {
     _nextChord = _chords[_random.nextInt(_chords.length)];
     _timeLeft = widget.seconds;
     _showAnswer = false;
-    _totalCount++;
     setState(() {});
   }
 
@@ -78,9 +76,10 @@ class _ChordGameState extends State<ChordGame> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAE5C8),
       appBar: AppBar(
-        title: Text('코드 연습 (${_diffLabel})'),
+        title: Text('코드 연습 ($_diffLabel)'),
         backgroundColor: const Color(0xFF8B6914),
         foregroundColor: Colors.white,
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           IconButton(icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
             onPressed: _togglePause),

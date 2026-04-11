@@ -19,7 +19,6 @@ class ChordDiagramWidget extends StatelessWidget {
     final frets = chord.frets;
     final playedFrets = frets.where((f) => f > 0).toList();
     final minFret = playedFrets.isEmpty ? 1 : playedFrets.reduce((a, b) => a < b ? a : b);
-    final maxFret = frets.reduce((a, b) => a > b ? a : b);
     final startFret = (minFret > 3) ? minFret : 1;
     final numFrets = 4;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -212,7 +211,6 @@ class _FretboardPainter extends CustomPainter {
     final fretPaint = Paint()..color = lineColor..strokeWidth = 1.5;
     final nutPaint = Paint()..color = nutColor..strokeWidth = 3.0;
     final dotPaint = Paint()..color = const Color(0xFF8B6914);
-    final mutePaint = Paint()..color = Colors.grey;
 
     // Draw nut (if starting from fret 1)
     if (startFret == 1) {

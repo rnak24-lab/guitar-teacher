@@ -26,7 +26,7 @@ class _ScalePracticeState extends State<ScalePractice> {
   late ScaleData _scale;
   late List<String> _scaleNotes;
   bool _showNoteNames = true;
-  bool _highlightRoot = true;
+  final bool _highlightRoot = true;
   int _currentNoteIndex = -1; // -1 = show all
 
   @override

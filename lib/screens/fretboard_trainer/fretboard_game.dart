@@ -100,6 +100,7 @@ class _FretboardGameState extends State<FretboardGame> {
         title: Text('프렛보드 연습 | 점수: $_score/$_total'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: _saveAndExit),
         actions: [
           Row(
             children: [
