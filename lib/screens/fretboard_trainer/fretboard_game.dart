@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../utils/music_theory.dart';
+import '../../services/practice_record.dart';
 
 class FretboardGame extends StatefulWidget {
   final int seconds;
@@ -68,6 +69,16 @@ class _FretboardGameState extends State<FretboardGame> {
       _total++;
       setState(() => _showAnswer = true);
     }
+  }
+
+  Future<void> _saveAndExit() async {
+    _timer?.cancel();
+    await PracticeRecord.saveSession(PracticeSession(
+      type: 'fretboard',
+      timestamp: DateTime.now(),
+      durationSeconds: _total * widget.seconds,
+    ));
+    if (mounted) Navigator.pop(context);
   }
 
   @override

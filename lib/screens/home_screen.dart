@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'fretboard_trainer/fretboard_setup.dart';
 import 'octave_trainer/octave_setup.dart';
 import 'chord_trainer/chord_setup.dart';
+import 'scale_trainer/scale_setup.dart';
 import 'tuner/tuner_screen.dart';
 import 'metronome/metronome_screen.dart';
+import 'practice_stats/practice_stats_screen.dart';
 import 'settings/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -44,12 +46,18 @@ class HomeScreen extends StatelessWidget {
                   _StageCard(icon: Icons.piano, title: '코드 연습', subtitle: '코드 체인지',
                     color: const Color(0xFF27AE60),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChordSetup()))),
+                  _StageCard(icon: Icons.queue_music, title: '스케일', subtitle: '스케일 연습',
+                    color: const Color(0xFF2980B9),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScaleSetup()))),
                   _StageCard(icon: Icons.tune, title: '튜너', subtitle: '기타 튜닝',
                     color: const Color(0xFF8E44AD),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TunerScreen()))),
                   _StageCard(icon: Icons.timer, title: '메트로놈', subtitle: 'BPM 연습',
                     color: const Color(0xFFC0392B),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MetronomeScreen()))),
+                  _StageCard(icon: Icons.bar_chart, title: '연습 기록', subtitle: '이번주 통계',
+                    color: const Color(0xFF16A085),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PracticeStatsScreen()))),
                   _StageCard(icon: Icons.settings, title: '설정', subtitle: '테마/언어',
                     color: Colors.grey,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()))),

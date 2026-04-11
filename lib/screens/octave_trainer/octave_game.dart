@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/octave_form.dart';
+import '../../services/practice_record.dart';
 import 'form_info_dialog.dart';
 
 class OctaveGame extends StatefulWidget {
@@ -27,10 +28,13 @@ class _OctaveGameState extends State<OctaveGame> {
   late String _currentNote;
   Timer? _timer;
   int _timeLeft = 0;
+  int _totalCount = 0;
+  final Stopwatch _stopwatch = Stopwatch();
 
   @override
   void initState() {
     super.initState();
+    _stopwatch.start();
     _nextQuestion();
   }
 
@@ -40,6 +44,7 @@ class _OctaveGameState extends State<OctaveGame> {
         ? Note.allNotes[_random.nextInt(12)]
         : widget.selectedNote;
     _timeLeft = widget.seconds;
+    _totalCount++;
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/chord.dart';
+import '../../widgets/chord_diagram_widget.dart';
+import '../../services/practice_record.dart';
 
 class ChordGame extends StatefulWidget {
   final int seconds;
@@ -22,11 +24,14 @@ class _ChordGameState extends State<ChordGame> {
   int _timeLeft = 0;
   bool _paused = false;
   bool _showAnswer = false;
+  int _totalCount = 0;
+  final Stopwatch _stopwatch = Stopwatch();
 
   @override
   void initState() {
     super.initState();
     _chords = ChordData.byDifficulty(widget.difficulty);
+    _stopwatch.start();
     _pickNext();
     _startTimer();
   }
@@ -36,6 +41,7 @@ class _ChordGameState extends State<ChordGame> {
     _nextChord = _chords[_random.nextInt(_chords.length)];
     _timeLeft = widget.seconds;
     _showAnswer = false;
+    _totalCount++;
     setState(() {});
   }
 
@@ -52,6 +58,17 @@ class _ChordGameState extends State<ChordGame> {
 
   void _togglePause() => setState(() => _paused = !_paused);
   void _toggleAnswer() => setState(() => _showAnswer = !_showAnswer);
+
+  Future<void> _saveAndExit() async {
+    _stopwatch.stop();
+    _timer?.cancel();
+    await PracticeRecord.saveSession(PracticeSession(
+      type: 'chord',
+      timestamp: DateTime.now(),
+      durationSeconds: _stopwatch.elapsed.inSeconds,
+    ));
+    if (mounted) Navigator.pop(context);
+  }
 
   @override
   void dispose() { _timer?.cancel(); super.dispose(); }
@@ -97,7 +114,7 @@ class _ChordGameState extends State<ChordGame> {
                       color: _timeLeft > 2 ? Colors.brown : Colors.red)),
                   const SizedBox(height: 16),
                   // 코드 다이어그램
-                  if (_showAnswer) _buildChordDiagram(),
+                  if (_showAnswer) ChordDiagramWidget(chord: _currentChord),
                   const SizedBox(height: 16),
                   // 정답보기 버튼
                   OutlinedButton.icon(
@@ -133,64 +150,4 @@ class _ChordGameState extends State<ChordGame> {
     }
   }
 
-  Widget _buildChordDiagram() {
-    final frets = _currentChord.frets;
-    final minFret = frets.where((f) => f > 0).fold<int>(99, (a, b) => a < b ? a : b);
-    final maxFret = frets.fold<int>(0, (a, b) => a > b ? a : b);
-    final startFret = minFret > 3 ? minFret : 1;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF8B6914)),
-      ),
-      child: Column(
-        children: [
-          if (startFret > 1)
-            Text('${startFret}fr', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(6, (i) {
-              final f = frets[i];
-              final stringNum = 6 - i;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Column(
-                  children: [
-                    Text('$stringNum', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: f == -1 ? Colors.grey[300]
-                            : f == 0 ? Colors.green[300]
-                            : const Color(0xFF8B6914),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.brown[300]!, width: 1),
-                      ),
-                      child: Center(
-                        child: Text(
-                          f == -1 ? 'X' : f == 0 ? 'O' : '$f',
-                          style: TextStyle(
-                            color: f == -1 ? Colors.grey[600] : Colors.white,
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-          if (_currentChord.barFret != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('바레: ${_currentChord.barFret}프렛',
-                style: const TextStyle(fontSize: 12, color: Colors.brown)),
-            ),
-        ],
-      ),
-    );
-  }
 }
