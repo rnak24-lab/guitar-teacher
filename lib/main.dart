@@ -3,11 +3,13 @@ import 'screens/home_screen.dart';
 import 'screens/tutorial/tutorial_screen.dart';
 import 'services/app_localizations.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().init();
   await NotificationService().restoreIfEnabled();
+  await AdService().init();
   runApp(const GuitarTeacherApp());
 }
 

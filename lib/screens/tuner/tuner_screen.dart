@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/pitch_detector.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../data/tuning_presets.dart';
 
 class TunerScreen extends StatefulWidget {
@@ -352,18 +353,7 @@ class _TunerScreenState extends State<TunerScreen> {
             ),
           const SizedBox(height: 16),
 
-          // AD Banner
-          Container(
-            height: 50,
-            width: double.infinity,
-            color: Colors.grey[200],
-            child: const Center(
-              child: Text(
-                'AD BANNER',
-                style: TextStyle(color: Colors.grey, fontSize: 11),
-              ),
-            ),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

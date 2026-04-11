@@ -6,6 +6,7 @@ import '../../models/note.dart';
 import '../../models/octave_form.dart';
 import '../../services/app_localizations.dart';
 import '../../services/practice_record.dart';
+import '../../widgets/ad_banner_widget.dart';
 import 'form_info_dialog.dart';
 
 /// Continuous octave form practice with drag-to-reorder note sequence
@@ -220,12 +221,7 @@ class _OctaveSetupState extends State<OctaveSetup> with TickerProviderStateMixin
           // Collapsible settings
           if (_showSettings) _buildSettings(isDark),
 
-          // AD Banner
-          Container(
-            height: 50, width: double.infinity,
-            color: isDark ? Colors.grey[900] : Colors.grey[200],
-            child: Center(child: Text('AD BANNER', style: TextStyle(color: isDark ? Colors.grey[700] : Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

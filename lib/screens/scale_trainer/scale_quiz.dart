@@ -6,6 +6,8 @@ import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../services/practice_record.dart';
 import '../../services/pitch_detector.dart';
+import '../../widgets/ad_banner_widget.dart';
+import '../../services/ad_service.dart';
 
 /// Quiz Mode: Random scale quiz - identify/play scale notes
 /// Now supports microphone input: play the note on guitar instead of tapping fret buttons.
@@ -189,6 +191,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
       timestamp: DateTime.now(),
       durationSeconds: _stopwatch.elapsed.inSeconds,
     ));
+    AdService().onPracticeComplete();
     if (mounted) {
       showDialog(
         context: context,
@@ -451,13 +454,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                 ),
               ),
             ),
-          // AD Banner
-          Container(
-            height: 50, width: double.infinity,
-            color: isDark ? Colors.grey[900] : Colors.grey[200],
-            child: Center(child: Text('AD BANNER',
-              style: TextStyle(color: isDark ? Colors.grey[700] : Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

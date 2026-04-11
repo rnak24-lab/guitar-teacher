@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/app_localizations.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'fretboard_trainer/fretboard_setup.dart';
 import 'octave_trainer/octave_setup.dart';
 import 'chord_trainer/chord_setup.dart';
@@ -73,12 +74,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            height: 60, width: double.infinity,
-            color: isDark ? Colors.grey[900] : Colors.grey[200],
-            child: Center(child: Text('AD BANNER PLACEHOLDER',
-              style: TextStyle(color: isDark ? Colors.grey[700] : Colors.grey, fontSize: 12))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

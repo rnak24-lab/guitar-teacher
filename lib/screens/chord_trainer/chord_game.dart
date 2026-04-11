@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/chord.dart';
 import '../../widgets/chord_diagram_widget.dart';
+import '../../widgets/ad_banner_widget.dart';
+import '../../services/ad_service.dart';
 import '../../services/practice_record.dart';
 import '../../services/app_localizations.dart';
 
@@ -81,6 +83,7 @@ class _ChordGameState extends State<ChordGame> {
       timestamp: DateTime.now(),
       durationSeconds: _stopwatch.elapsed.inSeconds,
     ));
+    AdService().onPracticeComplete();
     if (mounted) Navigator.pop(context);
   }
 
@@ -185,8 +188,7 @@ class _ChordGameState extends State<ChordGame> {
               ],
             ),
           ),
-          Container(height: 50, width: double.infinity, color: Colors.grey[200],
-            child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11)))),
+          const AdBannerWidget(),
         ],
       ),
     );

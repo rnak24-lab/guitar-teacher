@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../widgets/ad_banner_widget.dart';
 
 // ── Color tokens (warm wood / apricot / gold) ──
 class _C {
@@ -285,16 +286,8 @@ class _MetronomeScreenState extends State<MetronomeScreen>
               ),
             ),
 
-            // ── Ad banner placeholder ──
-            Container(
-              height: 50,
-              width: double.infinity,
-              color: _C.cardBg,
-              child: Center(
-                child: Text('AD BANNER',
-                    style: TextStyle(color: _C.border, fontSize: 11)),
-              ),
-            ),
+            // ── Ad banner ──
+            const AdBannerWidget(),
           ],
         ),
       ),

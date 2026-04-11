@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../utils/music_theory.dart';
+import '../../widgets/ad_banner_widget.dart';
+import '../../services/ad_service.dart';
 import '../../services/practice_record.dart';
 import '../../services/app_localizations.dart';
 
@@ -79,6 +81,7 @@ class _FretboardGameState extends State<FretboardGame> {
       timestamp: DateTime.now(),
       durationSeconds: _total * widget.seconds,
     ));
+    AdService().onPracticeComplete();
     if (mounted) Navigator.pop(context);
   }
 
@@ -206,13 +209,7 @@ class _FretboardGameState extends State<FretboardGame> {
                 child: Text(tr('fretboard_next_q')),
               ),
             ),
-          // 광고 배너 자리
-          Container(
-            height: 50,
-            width: double.infinity,
-            color: Colors.grey[200],
-            child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

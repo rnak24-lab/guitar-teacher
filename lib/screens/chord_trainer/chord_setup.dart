@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/app_localizations.dart';
 import 'chord_game.dart';
+import '../../widgets/ad_banner_widget.dart';
 
 class ChordSetup extends StatefulWidget {
   const ChordSetup({super.key});
@@ -98,8 +99,7 @@ class _ChordSetupState extends State<ChordSetup> {
               ),
             ),
             const SizedBox(height: 16),
-            Container(height: 50, width: double.infinity, color: Colors.grey[200],
-              child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11)))),
+            const AdBannerWidget(),
           ],
         ),
       ),

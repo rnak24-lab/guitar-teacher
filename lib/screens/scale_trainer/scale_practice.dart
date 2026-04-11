@@ -3,6 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../models/scale.dart';
 import '../../models/note.dart';
 import '../../models/guitar_string.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../services/pitch_detector.dart';
 
 /// Practice Mode: Shows scale notes highlighted on fretboard
@@ -306,13 +307,7 @@ class _ScalePracticeState extends State<ScalePractice> {
               ],
             ),
           ),
-          // AD Banner
-          Container(
-            height: 50, width: double.infinity,
-            color: isDark ? Colors.grey[900] : Colors.grey[200],
-            child: Center(child: Text('AD BANNER',
-              style: TextStyle(color: isDark ? Colors.grey[700] : Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

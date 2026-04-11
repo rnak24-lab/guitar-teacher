@@ -6,6 +6,7 @@ import '../../models/note.dart';
 import '../../models/guitar_string.dart';
 import '../../services/practice_record.dart';
 import '../../services/pitch_detector.dart';
+import '../../widgets/ad_banner_widget.dart';
 
 /// Continuous "Play X" note finder - no start button, runs immediately
 /// Now with microphone support + Auto mode.
@@ -526,12 +527,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
               ),
             ),
 
-          // AD Banner
-          Container(
-            height: 50, width: double.infinity,
-            color: isDark ? Colors.grey[900] : Colors.grey[200],
-            child: Center(child: Text('AD BANNER', style: TextStyle(color: isDark ? Colors.grey[700] : Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );

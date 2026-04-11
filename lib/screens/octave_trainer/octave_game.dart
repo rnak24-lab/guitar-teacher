@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/octave_form.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../services/app_localizations.dart';
 import 'form_info_dialog.dart';
 
@@ -134,12 +135,7 @@ class _OctaveGameState extends State<OctaveGame> {
               ),
             ),
           ),
-          Container(
-            height: 50,
-            width: double.infinity,
-            color: Colors.grey[200],
-            child: const Center(child: Text('AD BANNER', style: TextStyle(color: Colors.grey, fontSize: 11))),
-          ),
+          const AdBannerWidget(),
         ],
       ),
     );
