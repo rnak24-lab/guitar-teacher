@@ -7,6 +7,7 @@ import '../../widgets/ad_banner_widget.dart';
 import '../../services/ad_service.dart';
 import '../../services/practice_record.dart';
 import '../../services/app_localizations.dart';
+import '../../services/chord_audio_service.dart';
 import '../../providers/note_name_provider.dart';
 
 class ChordGame extends StatefulWidget {
@@ -34,6 +35,10 @@ class _ChordGameState extends State<ChordGame> {
   bool _autoShowDiagram = false;
   int _autoShowDelay = 2; // seconds
   Timer? _autoShowTimer;
+
+  // Chord audio preview
+  final ChordAudioService _chordAudio = ChordAudioService();
+  bool _isPlayingAudio = false;
 
   @override
   void initState() {
@@ -89,7 +94,7 @@ class _ChordGameState extends State<ChordGame> {
   }
 
   @override
-  void dispose() { _timer?.cancel(); _autoShowTimer?.cancel(); super.dispose(); }
+  void dispose() { _timer?.cancel(); _autoShowTimer?.cancel(); _chordAudio.stop(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +136,31 @@ class _ChordGameState extends State<ChordGame> {
                   const SizedBox(height: 16),
                   // 코드 다이어그램
                   if (_showAnswer) ChordDiagramWidget(chord: _currentChord),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  // 코드 사운드 미리듣기 버튼
+                  IconButton(
+                    onPressed: _isPlayingAudio ? null : () async {
+                      setState(() => _isPlayingAudio = true);
+                      final ok = await _chordAudio.playChord(_currentChord.name);
+                      if (!ok && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Audio sample not available yet'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      }
+                      await Future.delayed(const Duration(milliseconds: 1200));
+                      if (mounted) setState(() => _isPlayingAudio = false);
+                    },
+                    icon: Icon(
+                      _isPlayingAudio ? Icons.volume_up : Icons.volume_up_outlined,
+                      color: const Color(0xFFD4A017),
+                      size: 28,
+                    ),
+                    tooltip: 'Listen to chord',
+                  ),
+                  const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: _toggleAnswer,
                     icon: Icon(_showAnswer ? Icons.visibility_off : Icons.visibility),
