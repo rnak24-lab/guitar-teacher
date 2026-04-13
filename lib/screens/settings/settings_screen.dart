@@ -112,18 +112,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.vibration),
             title: Text(tr('settings_vibration')),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(tr('settings_vibration_on')),
-                const SizedBox(height: 4),
-                Text(
-                  tr('settings_vibration_desc'),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ],
+            subtitle: Text(tr('settings_vibration_on')),
+            trailing: IconButton(
+              icon: Icon(Icons.help_outline, size: 20, color: Colors.grey[400]),
+              tooltip: tr('settings_vibration_desc'),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Row(
+                      children: [
+                        const Icon(Icons.vibration, size: 20),
+                        const SizedBox(width: 8),
+                        Text(tr('settings_vibration')),
+                      ],
+                    ),
+                    content: Text(tr('settings_vibration_desc')),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-            isThreeLine: true,
           ),
           const Divider(),
 

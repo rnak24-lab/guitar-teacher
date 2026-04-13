@@ -4,6 +4,7 @@ import '../widgets/ad_banner_widget.dart';
 import 'fretboard_trainer/fretboard_setup.dart';
 import 'octave_trainer/octave_setup.dart';
 import 'chord_trainer/chord_setup.dart';
+import 'chord_trainer/chord_sequence_screen.dart';
 import 'scale_trainer/scale_setup.dart';
 import 'tuner/tuner_screen.dart';
 import 'metronome/metronome_screen.dart';
@@ -58,6 +59,9 @@ class HomeScreen extends StatelessWidget {
                   _StageCard(icon: Icons.queue_music, title: tr('home_scale'), subtitle: tr('home_scale_sub'),
                     color: const Color(0xFF2980B9),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScaleSetup()))),
+                  _StageCard(icon: Icons.playlist_play, title: tr('home_sequence'), subtitle: tr('home_sequence_sub'),
+                    color: const Color(0xFFD4A017),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChordSequenceScreen()))),
                   _StageCard(icon: Icons.tune, title: tr('home_tuner'), subtitle: tr('home_tuner_sub'),
                     color: const Color(0xFF8E44AD),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TunerScreen()))),

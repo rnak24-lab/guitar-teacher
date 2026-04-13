@@ -47,6 +47,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5 Chord Shapes (C·A·G·E·D)',
       'home_chord': 'Chord Practice',
       'home_chord_sub': 'Chord Changes',
+      'home_sequence': 'Sequence',
+      'home_sequence_sub': 'Custom Chord Practice',
       'home_scale': 'Scale',
       'home_scale_sub': 'Scale Practice',
       'home_tuner': 'Tuner',
@@ -189,6 +191,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': 'Metronome',
+
+      // Chord Sequence
+      'seq_title': 'Chord Sequence',
+      'seq_pick_chord': 'Pick a Chord',
+      'seq_search_chord': 'Search chord...',
+      'seq_beats': 'beats',
+      'seq_beat': 'Beat',
+      'seq_drag_bpm': 'Drag up/down to adjust',
+      'seq_add_chord': 'Add Chord',
+      'seq_empty': 'Tap + to add chords',
+      'seq_hint': 'Tap: change chord · Double tap: edit beats · Long press: remove',
+      'seq_save_favorite': 'Save as Favorite',
+      'seq_preset_name': 'Preset name',
+      'seq_saved': 'Saved',
+      'seq_no_favorites': 'No favorites yet',
+      'seq_favorites': 'Favorites',
+      'save': 'Save',
+      'stop': 'Stop',
     },
 
     // ==================== KOREAN ====================
@@ -209,6 +229,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '코드 폼 5가지 익히기 (C·A·G·E·D)',
       'home_chord': '코드 연습',
       'home_chord_sub': '코드 체인지',
+      'home_sequence': '시퀀스',
+      'home_sequence_sub': '코드 연습 커스텀',
       'home_scale': '스케일',
       'home_scale_sub': '스케일 연습',
       'home_tuner': '튜너',
@@ -333,6 +355,24 @@ class AppLocalizations extends ChangeNotifier {
       'tuner_listening': '듣는 중...',
       'tuner_tap_start': '탭하여 시작',
       'metronome_title': '메트로놈',
+
+      // Chord Sequence
+      'seq_title': '코드 시퀀스',
+      'seq_pick_chord': '코드 선택',
+      'seq_search_chord': '코드 검색...',
+      'seq_beats': '박',
+      'seq_beat': '박자',
+      'seq_drag_bpm': '위아래 드래그로 조절',
+      'seq_add_chord': '코드 추가',
+      'seq_empty': '+ 를 눌러 코드를 추가하세요',
+      'seq_hint': '탭: 코드 변경 · 더블탭: 박자 수정 · 길게 누르기: 삭제',
+      'seq_save_favorite': '즐겨찾기 저장',
+      'seq_preset_name': '프리셋 이름',
+      'seq_saved': '저장 완료',
+      'seq_no_favorites': '즐겨찾기가 없습니다',
+      'seq_favorites': '즐겨찾기',
+      'save': '저장',
+      'stop': '정지',
     },
 
     // ==================== JAPANESE ====================
@@ -356,6 +396,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5つのコードフォーム (C·A·G·E·D)',
       'home_chord': 'コード練習',
       'home_chord_sub': 'コードチェンジ',
+      'home_sequence': 'シーケンス',
+      'home_sequence_sub': 'カスタムコード練習',
       'home_scale': 'スケール',
       'home_scale_sub': 'スケール練習',
       'home_tuner': 'チューナー',
@@ -498,6 +540,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': 'メトロノーム',
+
+      // Chord Sequence
+      'seq_title': 'コードシーケンス',
+      'seq_pick_chord': 'コードを選択',
+      'seq_search_chord': 'コード検索...',
+      'seq_beats': '拍',
+      'seq_beat': '拍目',
+      'seq_drag_bpm': '上下ドラッグで調整',
+      'seq_add_chord': 'コード追加',
+      'seq_empty': '+ をタップしてコードを追加',
+      'seq_hint': 'タップ: コード変更 · ダブルタップ: 拍数編集 · 長押し: 削除',
+      'seq_save_favorite': 'お気に入りに保存',
+      'seq_preset_name': 'プリセット名',
+      'seq_saved': '保存しました',
+      'seq_no_favorites': 'お気に入りはまだありません',
+      'seq_favorites': 'お気に入り',
+      'save': '保存',
+      'stop': '停止',
     },
 
     // ==================== CHINESE ====================
@@ -521,6 +581,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5种和弦指型 (C·A·G·E·D)',
       'home_chord': '和弦练习',
       'home_chord_sub': '和弦转换',
+      'home_sequence': '序列',
+      'home_sequence_sub': '自定义和弦练习',
       'home_scale': '音阶',
       'home_scale_sub': '音阶练习',
       'home_tuner': '调音器',
@@ -663,6 +725,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': '节拍器',
+
+      // Chord Sequence
+      'seq_title': '和弦序列',
+      'seq_pick_chord': '选择和弦',
+      'seq_search_chord': '搜索和弦...',
+      'seq_beats': '拍',
+      'seq_beat': '拍',
+      'seq_drag_bpm': '上下拖动调整',
+      'seq_add_chord': '添加和弦',
+      'seq_empty': '点击 + 添加和弦',
+      'seq_hint': '点击: 更改和弦 · 双击: 编辑拍数 · 长按: 删除',
+      'seq_save_favorite': '收藏',
+      'seq_preset_name': '预设名称',
+      'seq_saved': '已保存',
+      'seq_no_favorites': '暂无收藏',
+      'seq_favorites': '收藏夹',
+      'save': '保存',
+      'stop': '停止',
     },
 
     // ==================== VIETNAMESE ====================
@@ -686,6 +766,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5 thế bấm hợp âm (C·A·G·E·D)',
       'home_chord': 'Hợp âm',
       'home_chord_sub': 'Chuyển hợp âm',
+      'home_sequence': 'Chuỗi',
+      'home_sequence_sub': 'Luyện hợp âm tùy chỉnh',
       'home_scale': 'Âm giai',
       'home_scale_sub': 'Luyện âm giai',
       'home_tuner': 'Máy lên dây',
@@ -828,6 +910,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': 'Máy đếm nhịp',
+
+      // Chord Sequence
+      'seq_title': 'Chuỗi hợp âm',
+      'seq_pick_chord': 'Chọn hợp âm',
+      'seq_search_chord': 'Tìm hợp âm...',
+      'seq_beats': 'nhịp',
+      'seq_beat': 'Nhịp',
+      'seq_drag_bpm': 'Kéo lên/xuống để điều chỉnh',
+      'seq_add_chord': 'Thêm hợp âm',
+      'seq_empty': 'Nhấn + để thêm hợp âm',
+      'seq_hint': 'Chạm: đổi hợp âm · Nhấn đúp: sửa nhịp · Giữ lâu: xóa',
+      'seq_save_favorite': 'Lưu yêu thích',
+      'seq_preset_name': 'Tên preset',
+      'seq_saved': 'Đã lưu',
+      'seq_no_favorites': 'Chưa có yêu thích',
+      'seq_favorites': 'Yêu thích',
+      'save': 'Lưu',
+      'stop': 'Dừng',
     },
 
     // ==================== FRENCH ====================
@@ -851,6 +951,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5 formes d\'accords (C·A·G·E·D)',
       'home_chord': 'Accords',
       'home_chord_sub': 'Changements d\'accords',
+      'home_sequence': 'Séquence',
+      'home_sequence_sub': 'Pratique d\'accords perso',
       'home_scale': 'Gammes',
       'home_scale_sub': 'Pratique des gammes',
       'home_tuner': 'Accordeur',
@@ -993,6 +1095,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': 'Métronome',
+
+      // Chord Sequence
+      'seq_title': 'Séquence d\'accords',
+      'seq_pick_chord': 'Choisir un accord',
+      'seq_search_chord': 'Rechercher un accord...',
+      'seq_beats': 'temps',
+      'seq_beat': 'Temps',
+      'seq_drag_bpm': 'Glisser pour ajuster',
+      'seq_add_chord': 'Ajouter un accord',
+      'seq_empty': 'Appuyez sur + pour ajouter des accords',
+      'seq_hint': 'Tap: changer · Double tap: modifier les temps · Appui long: supprimer',
+      'seq_save_favorite': 'Sauvegarder en favori',
+      'seq_preset_name': 'Nom du preset',
+      'seq_saved': 'Sauvegardé',
+      'seq_no_favorites': 'Aucun favori',
+      'seq_favorites': 'Favoris',
+      'save': 'Sauvegarder',
+      'stop': 'Arrêter',
     },
 
     // ==================== SPANISH ====================
@@ -1016,6 +1136,8 @@ class AppLocalizations extends ChangeNotifier {
       'home_octave_sub': '5 formas de acordes (C·A·G·E·D)',
       'home_chord': 'Acordes',
       'home_chord_sub': 'Cambios de acordes',
+      'home_sequence': 'Secuencia',
+      'home_sequence_sub': 'Práctica de acordes personal',
       'home_scale': 'Escalas',
       'home_scale_sub': 'Práctica de escalas',
       'home_tuner': 'Afinador',
@@ -1158,6 +1280,24 @@ class AppLocalizations extends ChangeNotifier {
 
       // Metronome
       'metronome_title': 'Metrónomo',
+
+      // Chord Sequence
+      'seq_title': 'Secuencia de acordes',
+      'seq_pick_chord': 'Elegir acorde',
+      'seq_search_chord': 'Buscar acorde...',
+      'seq_beats': 'tiempos',
+      'seq_beat': 'Tiempo',
+      'seq_drag_bpm': 'Desliza para ajustar',
+      'seq_add_chord': 'Agregar acorde',
+      'seq_empty': 'Toca + para agregar acordes',
+      'seq_hint': 'Toca: cambiar · Doble toque: editar tiempos · Mantener: eliminar',
+      'seq_save_favorite': 'Guardar como favorito',
+      'seq_preset_name': 'Nombre del preset',
+      'seq_saved': 'Guardado',
+      'seq_no_favorites': 'Sin favoritos',
+      'seq_favorites': 'Favoritos',
+      'save': 'Guardar',
+      'stop': 'Detener',
     },
   };
 }
