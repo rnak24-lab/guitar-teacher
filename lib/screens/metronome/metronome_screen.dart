@@ -38,10 +38,11 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   bool _soundEnabled = true;
 
   // Use a pool of AudioPlayers to avoid stop/play race conditions
-  final List<AudioPlayer> _highPlayers = List.generate(3, (_) => AudioPlayer());
-  final List<AudioPlayer> _lowPlayers = List.generate(3, (_) => AudioPlayer());
+  final List<AudioPlayer> _highPlayers = List.generate(4, (_) => AudioPlayer());
+  final List<AudioPlayer> _lowPlayers = List.generate(4, (_) => AudioPlayer());
   int _highIdx = 0;
   int _lowIdx = 0;
+  bool _assetsPreloaded = false;
 
   // ── Tap Tempo state ──
   final List<int> _tapTimestamps = [];
@@ -92,6 +93,23 @@ class _MetronomeScreenState extends State<MetronomeScreen>
       _bpm = prefs.getInt('metronome_bpm') ?? 120;
       _beatsPerMeasure = prefs.getInt('metronome_beats') ?? 4;
     });
+    _preloadAssets();
+  }
+
+  /// Pre-load audio assets into all pool players so first beat plays instantly.
+  Future<void> _preloadAssets() async {
+    if (_assetsPreloaded) return;
+    _assetsPreloaded = true;
+    for (final p in _highPlayers) {
+      await p.setSource(AssetSource('sounds/click_high.wav'));
+      await p.setReleaseMode(ReleaseMode.stop);
+      await p.setVolume(1.0);
+    }
+    for (final p in _lowPlayers) {
+      await p.setSource(AssetSource('sounds/click_low.wav'));
+      await p.setReleaseMode(ReleaseMode.stop);
+      await p.setVolume(1.0);
+    }
   }
 
   Future<void> _savePreferences() async {
@@ -132,11 +150,17 @@ class _MetronomeScreenState extends State<MetronomeScreen>
       if (isDownbeat) {
         final player = _highPlayers[_highIdx % _highPlayers.length];
         _highIdx++;
-        player.stop().then((_) => player.play(AssetSource('sounds/click_high.wav')));
+        // Use seek+resume for pre-loaded assets to avoid stop/play race condition
+        player.seek(Duration.zero).then((_) => player.resume()).catchError((_) {
+          // Fallback: if seek/resume fails, do full play
+          player.play(AssetSource('sounds/click_high.wav'));
+        });
       } else {
         final player = _lowPlayers[_lowIdx % _lowPlayers.length];
         _lowIdx++;
-        player.stop().then((_) => player.play(AssetSource('sounds/click_low.wav')));
+        player.seek(Duration.zero).then((_) => player.resume()).catchError((_) {
+          player.play(AssetSource('sounds/click_low.wav'));
+        });
       }
     }
     if (_vibrationEnabled) {
