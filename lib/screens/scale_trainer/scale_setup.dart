@@ -6,11 +6,14 @@ import 'scale_practice.dart';
 import 'scale_quiz.dart';
 import '../../providers/note_name_provider.dart';
 
-/// Circle-of-fourths order: C F Bb Eb Ab Db Gb B E A D G
+/// Circle-of-fourths order (confirmed 4/13): C F Bb Eb Ab Db Gb B E A D G C
 const _circleOf4ths = ['C','F','Bb','Eb','Ab','Db','Gb','B','E','A','D','G'];
 
-/// Circle-of-fifths order: C G D A E B Gb Db Ab Eb Bb F
-const _circleOf5ths = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
+/// Circle-of-fifths order (confirmed 4/13): C G D A E B F# Db Ab Eb Bb F C
+const _circleOf5ths = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
+
+/// Display alias: F# is enharmonic to Gb – map for internal lookups
+const _enharmonicMap = {'F#': 'Gb'};
 
 class ScaleSetup extends StatefulWidget {
   const ScaleSetup({super.key});
@@ -37,6 +40,9 @@ class _ScaleSetupState extends State<ScaleSetup> {
     if (_circleMode == '5th') return _circleOf5ths;
     return Note.allNotes;
   }
+
+  /// Resolve enharmonic equivalents for internal use (e.g. F# -> Gb)
+  String get _resolvedRoot => _enharmonicMap[_selectedRoot] ?? _selectedRoot;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +169,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        '(${NoteNameProvider().display(_selectedRoot)}$_octave)',
+                        '(${NoteNameProvider().display(_resolvedRoot)}$_octave)',
                         style: TextStyle(
                           fontSize: 16,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -370,7 +376,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
 
   String _scaleFormula(ScaleData scale) {
     final nn = NoteNameProvider();
-    return scale.notesForRoot(_selectedRoot).map((n) => nn.display(n)).join(' - ');
+    return scale.notesForRoot(_resolvedRoot).map((n) => nn.display(n)).join(' - ');
   }
 
   void _openPractice() {
@@ -378,7 +384,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
       context,
       MaterialPageRoute(
         builder: (_) => ScalePractice(
-          rootNote: _selectedRoot,
+          rootNote: _resolvedRoot,
           scaleName: _selectedScale,
           startFret: _startFret,
           endFret: _endFret,
@@ -393,7 +399,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
       context,
       MaterialPageRoute(
         builder: (_) => ScaleQuiz(
-          rootNote: _selectedRoot,
+          rootNote: _resolvedRoot,
           scaleName: _selectedScale,
           startFret: _startFret,
           endFret: _endFret,
