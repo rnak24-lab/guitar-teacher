@@ -7,6 +7,7 @@ import '../../models/guitar_string.dart';
 import '../../services/practice_record.dart';
 import '../../services/pitch_detector.dart';
 import '../../widgets/ad_banner_widget.dart';
+import '../../providers/note_name_provider.dart';
 
 /// Continuous "Play X" note finder - no start button, runs immediately
 /// Now with microphone support + Auto mode.
@@ -49,6 +50,12 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
   double _detectedFrequency = 0;
   String _detectedNote = '';
 
+  // ── Tuner-check mode (자동버튼) ──
+  bool _tunerCheckActive = false;
+  double _tunerCents = 0;
+  double _tunerTargetFreq = 0;
+  bool _tunerMatched = false;
+
   // Animation
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -66,6 +73,34 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
         _detectedFrequency = freq;
         _detectedNote = noteName;
       });
+
+      // ── Tuner-check mode: show cents offset like the Tuner screen ──
+      if (_tunerCheckActive && !_showAnswer) {
+        final targetFreq = _tunerTargetFreq;
+        if (targetFreq > 0 && freq > 0) {
+          final centsOff = PitchDetector.calculateCents(freq, targetFreq);
+          setState(() {
+            _tunerCents = centsOff;
+          });
+          // If within 15 cents, count as matched
+          if (centsOff.abs() < 15) {
+            setState(() => _tunerMatched = true);
+            HapticFeedback.mediumImpact();
+            _score++;
+            _total++;
+            Future.delayed(const Duration(milliseconds: 1200), () {
+              if (mounted) {
+                setState(() {
+                  _tunerMatched = false;
+                  _tunerCheckActive = false;
+                });
+                _nextNote();
+              }
+            });
+          }
+        }
+        return; // tuner-check mode handles its own logic
+      }
 
       if (_micEnabled && !_showAnswer) {
         // Check if detected frequency matches the target note on the current string
@@ -107,6 +142,50 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     _nextNote();
   }
 
+  /// Activate tuner-check mode: start mic, calculate target frequency
+  Future<void> _activateTunerCheck() async {
+    if (_tunerCheckActive) {
+      // Deactivate
+      await _pitchDetector.stopListening();
+      setState(() {
+        _tunerCheckActive = false;
+        _tunerCents = 0;
+        _tunerMatched = false;
+        _micEnabled = false;
+      });
+      return;
+    }
+
+    // Calculate target frequency for the current note on the current string
+    // Find the lowest correct fret for this note
+    final targetFret = _correctFrets.isNotEmpty ? _correctFrets.first : 0;
+    final targetFreq = PitchDetector.frequencyForStringFret(_currentString, targetFret);
+
+    // Start microphone if not already listening
+    if (!_pitchDetector.isListening) {
+      final ok = await _pitchDetector.startListening();
+      if (!ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission required')),
+          );
+        }
+        return;
+      }
+    }
+
+    // Pause the countdown timer during tuner check
+    _timer?.cancel();
+
+    setState(() {
+      _tunerCheckActive = true;
+      _tunerTargetFreq = targetFreq;
+      _tunerCents = 0;
+      _tunerMatched = false;
+      _micEnabled = true;
+    });
+  }
+
   void _nextNote() {
     final strings = _selectedStrings.toList();
     if (strings.isEmpty) return;
@@ -122,6 +201,9 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
     _autoRevealTimer?.cancel();
     _detectedFrequency = 0;
     _detectedNote = '';
+    _tunerCheckActive = false;
+    _tunerCents = 0;
+    _tunerMatched = false;
 
     _fadeController.forward(from: 0);
 
@@ -354,7 +436,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                           style: TextStyle(fontSize: 20, color: Colors.green[600], fontWeight: FontWeight.bold),
                         ),
                       ),
-                    if (_micEnabled)
+                    if (_micEnabled && !_tunerCheckActive)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
@@ -367,6 +449,108 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
               ),
             ),
           ),
+
+          // ── Tuner-check auto button ──
+          if (!_showAnswer)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _activateTunerCheck,
+                      icon: Icon(
+                        _tunerCheckActive ? Icons.mic : Icons.music_note,
+                        size: 24,
+                      ),
+                      label: Text(
+                        _tunerCheckActive ? 'Listening... Tap to cancel' : 'Check with Guitar',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _tunerCheckActive
+                            ? (_tunerMatched ? Colors.green : Colors.purple[600])
+                            : const Color(0xFF4A90D9),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: _tunerCheckActive ? 4 : 2,
+                      ),
+                    ),
+                  ),
+                  // Tuner-style feedback when active
+                  if (_tunerCheckActive)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _tunerMatched
+                            ? Colors.green.withValues(alpha: 0.15)
+                            : Colors.purple.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _tunerMatched ? Colors.green : Colors.purple.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Target info
+                          Text(
+                            'String $_currentString, Fret ${_correctFrets.isNotEmpty ? _correctFrets.first : "?"} '
+                            '(${NoteNameProvider().display(_currentNote)})',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            'Target: ${_tunerTargetFreq.toStringAsFixed(1)} Hz',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          ),
+                          const SizedBox(height: 8),
+                          // Cents indicator bar
+                          SizedBox(
+                            height: 40,
+                            child: CustomPaint(
+                              size: const Size(double.infinity, 40),
+                              painter: _CentsBarPainter(
+                                cents: _tunerCents,
+                                matched: _tunerMatched,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Status text
+                          if (_detectedFrequency > 0)
+                            Text(
+                              _tunerMatched
+                                  ? 'Correct!'
+                                  : _tunerCents > 0
+                                      ? '${_tunerCents.toStringAsFixed(0)}c sharp  (${_detectedFrequency.toStringAsFixed(0)} Hz)'
+                                      : '${_tunerCents.abs().toStringAsFixed(0)}c flat  (${_detectedFrequency.toStringAsFixed(0)} Hz)',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _tunerMatched
+                                    ? Colors.green
+                                    : (_tunerCents.abs() < 25 ? Colors.orange : Colors.red),
+                              ),
+                            )
+                          else
+                            Text(
+                              'Play the note on your guitar...',
+                              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
           // Fret selection grid
           Expanded(
@@ -532,4 +716,71 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
       ),
     );
   }
+}
+
+/// Horizontal cents bar painter (tuner-style visual feedback)
+class _CentsBarPainter extends CustomPainter {
+  final double cents;
+  final bool matched;
+
+  _CentsBarPainter({required this.cents, required this.matched});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final barHeight = 8.0;
+
+    // Background bar
+    final bgRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset(centerX, centerY), width: size.width - 20, height: barHeight),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(bgRect, Paint()..color = Colors.grey.withValues(alpha: 0.2));
+
+    // Center line (perfect pitch)
+    canvas.drawLine(
+      Offset(centerX, centerY - 16),
+      Offset(centerX, centerY + 16),
+      Paint()
+        ..color = Colors.green
+        ..strokeWidth = 2.5,
+    );
+
+    // Tick marks at -50, -25, 0, +25, +50
+    for (final tick in [-50, -25, 25, 50]) {
+      final x = centerX + (tick / 50) * (size.width / 2 - 20);
+      canvas.drawLine(
+        Offset(x, centerY - 8),
+        Offset(x, centerY + 8),
+        Paint()
+          ..color = Colors.grey.withValues(alpha: 0.3)
+          ..strokeWidth = 1,
+      );
+    }
+
+    // Needle indicator
+    if (cents != 0 || matched) {
+      final clampedCents = cents.clamp(-50.0, 50.0);
+      final needleX = centerX + (clampedCents / 50) * (size.width / 2 - 20);
+      final needleColor = matched ? Colors.green : (cents.abs() < 15 ? Colors.green : (cents.abs() < 30 ? Colors.orange : Colors.red));
+
+      canvas.drawCircle(
+        Offset(needleX, centerY),
+        8,
+        Paint()..color = needleColor,
+      );
+
+      // Inner dot
+      canvas.drawCircle(
+        Offset(needleX, centerY),
+        3,
+        Paint()..color = Colors.white,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CentsBarPainter old) =>
+      old.cents != cents || old.matched != matched;
 }
