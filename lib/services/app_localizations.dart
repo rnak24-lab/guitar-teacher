@@ -45,7 +45,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': 'Fretboard',
       'home_fretboard_sub': 'Note Memorization',
       'home_octave': 'Octave Form',
-      'home_octave_sub': '5 Chord Shapes (C·A·G·E·D)',
+      'home_octave_sub': '5 Octave Forms (Form 1~5)',
       'home_chord': 'Chord Practice',
       'home_chord_sub': 'Chord Changes',
       'home_sequence': 'Sequence',
@@ -144,7 +144,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ Time Setting',
       'octave_game_title': 'Octave Form Practice',
       'octave_form_n': 'Form {n}',
-      'octave_info_title': '5 Chord Shapes (C·A·G·E·D)',
+      'octave_info_title': '5 Octave Forms (Form 1~5)',
       'octave_info_sub': 'Each form shows 2-string octave shapes',
 
       // Scale trainer
@@ -230,7 +230,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': '프렛보드',
       'home_fretboard_sub': '음 위치 외우기',
       'home_octave': '옥타브 폼',
-      'home_octave_sub': '코드 폼 5가지 익히기 (C·A·G·E·D)',
+      'home_octave_sub': '옥타브 폼 5가지 익히기 (1~5번폼)',
       'home_chord': '코드 연습',
       'home_chord_sub': '코드 체인지',
       'home_sequence': '시퀀스',
@@ -319,7 +319,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ 시간 설정',
       'octave_game_title': '옥타브 폼 연습',
       'octave_form_n': '{n}번 폼',
-      'octave_info_title': '코드 폼 5가지 (C·A·G·E·D)',
+      'octave_info_title': '옥타브 폼 5가지 (1~5번폼)',
       'octave_info_sub': '각 폼의 2줄 옥타브 형태를 보여줍니다',
       'scale_setup_title': '스케일 연습',
       'scale_root': '루트 음',
@@ -400,7 +400,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': 'フレットボード',
       'home_fretboard_sub': '音の位置を覚える',
       'home_octave': 'オクターブ',
-      'home_octave_sub': '5つのコードフォーム (C·A·G·E·D)',
+      'home_octave_sub': '5つのオクターブフォーム (フォーム1~5)',
       'home_chord': 'コード練習',
       'home_chord_sub': 'コードチェンジ',
       'home_sequence': 'シーケンス',
@@ -499,7 +499,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ 時間設定',
       'octave_game_title': 'オクターブフォーム練習',
       'octave_form_n': 'フォーム{n}',
-      'octave_info_title': '5つのコードフォーム (C·A·G·E·D)',
+      'octave_info_title': '5つのオクターブフォーム (フォーム1~5)',
       'octave_info_sub': '各フォームの2弦オクターブの形を表示します',
 
       // Scale trainer
@@ -588,7 +588,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': '指板',
       'home_fretboard_sub': '记忆音符位置',
       'home_octave': '八度形式',
-      'home_octave_sub': '5种和弦指型 (C·A·G·E·D)',
+      'home_octave_sub': '5种八度指型 (指型1~5)',
       'home_chord': '和弦练习',
       'home_chord_sub': '和弦转换',
       'home_sequence': '序列',
@@ -687,7 +687,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ 时间设置',
       'octave_game_title': '八度形式练习',
       'octave_form_n': '形式{n}',
-      'octave_info_title': '5种和弦指型 (C·A·G·E·D)',
+      'octave_info_title': '5种八度指型 (指型1~5)',
       'octave_info_sub': '每种指型显示2弦八度音程形状',
 
       // Scale trainer
@@ -776,7 +776,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': 'Phím đàn',
       'home_fretboard_sub': 'Ghi nhớ nốt nhạc',
       'home_octave': 'Quãng tám',
-      'home_octave_sub': '5 thế bấm hợp âm (C·A·G·E·D)',
+      'home_octave_sub': '5 thế bấm quãng tám (Thế 1~5)',
       'home_chord': 'Hợp âm',
       'home_chord_sub': 'Chuyển hợp âm',
       'home_sequence': 'Chuỗi',
@@ -875,7 +875,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ Cài đặt thời gian',
       'octave_game_title': 'Luyện quãng tám',
       'octave_form_n': 'Thế {n}',
-      'octave_info_title': '5 thế bấm hợp âm (C·A·G·E·D)',
+      'octave_info_title': '5 thế bấm quãng tám (Thế 1~5)',
       'octave_info_sub': 'Mỗi thế hiển thị hình dạng quãng tám 2 dây',
 
       // Scale trainer
@@ -964,7 +964,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': 'Manche',
       'home_fretboard_sub': 'Mémoriser les notes',
       'home_octave': 'Octave',
-      'home_octave_sub': '5 formes d\'accords (C·A·G·E·D)',
+      'home_octave_sub': '5 formes d\'octaves (Forme 1~5)',
       'home_chord': 'Accords',
       'home_chord_sub': 'Changements d\'accords',
       'home_sequence': 'Séquence',
@@ -1063,7 +1063,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ Réglage du temps',
       'octave_game_title': 'Pratique des octaves',
       'octave_form_n': 'Forme {n}',
-      'octave_info_title': '5 formes d\'accords (C·A·G·E·D)',
+      'octave_info_title': '5 formes d\'octaves (Forme 1~5)',
       'octave_info_sub': 'Chaque forme montre les octaves sur 2 cordes',
 
       // Scale trainer
@@ -1152,7 +1152,7 @@ class AppLocalizations extends ChangeNotifier {
       'home_fretboard': 'Diapasón',
       'home_fretboard_sub': 'Memorizar notas',
       'home_octave': 'Octava',
-      'home_octave_sub': '5 formas de acordes (C·A·G·E·D)',
+      'home_octave_sub': '5 formas de octava (Forma 1~5)',
       'home_chord': 'Acordes',
       'home_chord_sub': 'Cambios de acordes',
       'home_sequence': 'Secuencia',
@@ -1251,7 +1251,7 @@ class AppLocalizations extends ChangeNotifier {
       'octave_time': '⏱ Ajuste de tiempo',
       'octave_game_title': 'Práctica de octavas',
       'octave_form_n': 'Forma {n}',
-      'octave_info_title': '5 formas de acordes (C·A·G·E·D)',
+      'octave_info_title': '5 formas de octava (Forma 1~5)',
       'octave_info_sub': 'Cada forma muestra octavas en 2 cuerdas',
 
       // Scale trainer
