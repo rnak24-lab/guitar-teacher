@@ -405,6 +405,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
           startFret: _startFret,
           endFret: _endFret,
           enabledStrings: List.from(_stringEnabled),
+          circleMode: _circleMode,
         ),
       ),
     );

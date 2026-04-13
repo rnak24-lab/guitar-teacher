@@ -8,16 +8,26 @@ import '../../services/practice_record.dart';
 import '../../services/pitch_detector.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../services/ad_service.dart';
+import '../../services/tone_generator.dart';
 import '../../providers/note_name_provider.dart';
+
+/// Circle-of-fourths order
+const _quizCircleOf4ths = ['C','F','Bb','Eb','Ab','Db','Gb','B','E','A','D','G'];
+
+/// Circle-of-fifths order
+const _quizCircleOf5ths = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
 
 /// Quiz Mode: Random scale quiz - identify/play scale notes
 /// Now supports microphone input: play the note on guitar instead of tapping fret buttons.
+/// Supports circle-of-4ths/5ths sequential quiz ordering.
 class ScaleQuiz extends StatefulWidget {
   final String rootNote;
   final String scaleName;
   final int startFret;
   final int endFret;
   final List<bool>? enabledStrings;
+  /// null = random, '4th' = circle of 4ths order, '5th' = circle of 5ths order
+  final String? circleMode;
 
   const ScaleQuiz({
     super.key,
@@ -26,6 +36,7 @@ class ScaleQuiz extends StatefulWidget {
     required this.startFret,
     required this.endFret,
     this.enabledStrings,
+    this.circleMode,
   });
 
   @override
@@ -61,12 +72,29 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   Timer? _autoTimer;
   int _autoTimeLeft = 3;
 
+  // ── Circle-of-4ths/5ths sequential quiz ordering ──
+  List<String>? _circleOrder;
+  int _circleIndex = 0;
+
+  // ── Play reference tone for unselected strings ──
+  final ToneGenerator _toneGenerator = ToneGenerator();
+  bool _isPlayingRefTone = false;
+
   @override
   void initState() {
     super.initState();
     _scale = ScaleData.byName(widget.scaleName);
     _scaleNotes = _scale.notesForRoot(widget.rootNote);
     _stopwatch.start();
+
+    // Setup circle-of-4ths/5ths sequential ordering if specified
+    if (widget.circleMode == '4th') {
+      _circleOrder = _quizCircleOf4ths;
+      _circleIndex = 0;
+    } else if (widget.circleMode == '5th') {
+      _circleOrder = _quizCircleOf5ths;
+      _circleIndex = 0;
+    }
 
     _pitchDetector.onPitchDetected = (freq, noteName, cents) {
       if (!mounted || _answered) return;
@@ -125,6 +153,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   void dispose() {
     _autoTimer?.cancel();
     _pitchDetector.dispose();
+    _toneGenerator.dispose();
     super.dispose();
   }
 
@@ -163,7 +192,17 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   }
 
   void _nextQuestion() {
-    _questionNote = _scaleNotes[_random.nextInt(_scaleNotes.length)];
+    // In circle mode, use sequential root note ordering
+    if (_circleOrder != null) {
+      _questionNote = _circleOrder![_circleIndex % _circleOrder!.length];
+      // Handle enharmonic: F# -> Gb for internal note matching
+      const enharmonic = {'F#': 'Gb'};
+      _questionNote = enharmonic[_questionNote] ?? _questionNote;
+      _circleIndex++;
+    } else {
+      _questionNote = _scaleNotes[_random.nextInt(_scaleNotes.length)];
+    }
+
     // Pick only from enabled strings
     final enabled = widget.enabledStrings ?? List.filled(6, true);
     final availableStrings = <int>[];
@@ -189,9 +228,21 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     _detectedFrequency = 0;
     _detectedNote = '';
     _pitchHint = '';
+    _isPlayingRefTone = false;
     if (!_micEnabled) _totalQuestions++;
     _startAutoTimer();
     setState(() {});
+  }
+
+  /// Play reference tone for the target note (for unselected-string play mode)
+  Future<void> _playReferenceTone() async {
+    if (_correctFrets.isEmpty) return;
+    final freq = PitchDetector.frequencyForStringFret(
+      _questionString, _correctFrets.first,
+    );
+    setState(() => _isPlayingRefTone = true);
+    await _toneGenerator.playTone(freq, durationMs: 1500);
+    if (mounted) setState(() => _isPlayingRefTone = false);
   }
 
   void _checkAnswer(int fret) {
@@ -420,6 +471,26 @@ class _ScaleQuizState extends State<ScaleQuiz> {
               ),
             ),
 
+          // Circle mode indicator
+          if (widget.circleMode != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: Colors.orange.withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  Icon(Icons.loop, size: 14, color: Colors.orange[700]),
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.circleMode == '4th' ? 'Circle of 4ths Order' : 'Circle of 5ths Order',
+                    style: TextStyle(fontSize: 12, color: Colors.orange[700], fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Text('${(_circleIndex - 1) % (_circleOrder?.length ?? 12) + 1}/12',
+                    style: TextStyle(fontSize: 12, color: Colors.orange[600])),
+                ],
+              ),
+            ),
+
           // Question
           Padding(
             padding: const EdgeInsets.all(20),
@@ -427,11 +498,27 @@ class _ScaleQuizState extends State<ScaleQuiz> {
               children: [
                 Text('Where is', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
                 const SizedBox(height: 4),
-                Text(NoteNameProvider().display(_questionNote),
-                  style: TextStyle(
-                    fontSize: 64, fontWeight: FontWeight.bold,
-                    color: isMicCorrect ? Colors.green : const Color(0xFF8B6914),
-                  )),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(NoteNameProvider().display(_questionNote),
+                      style: TextStyle(
+                        fontSize: 64, fontWeight: FontWeight.bold,
+                        color: isMicCorrect ? Colors.green : const Color(0xFF8B6914),
+                      )),
+                    const SizedBox(width: 8),
+                    // Play reference tone button
+                    IconButton(
+                      onPressed: _isPlayingRefTone ? null : _playReferenceTone,
+                      icon: Icon(
+                        _isPlayingRefTone ? Icons.volume_up : Icons.play_circle_outline,
+                        size: 32,
+                        color: _isPlayingRefTone ? Colors.green : const Color(0xFF8B6914),
+                      ),
+                      tooltip: 'Play reference tone',
+                    ),
+                  ],
+                ),
                 Text('on String $_questionString?',
                   style: TextStyle(fontSize: 20, color: isDark ? Colors.grey[300] : Colors.brown[600])),
                 if (_autoTimerEnabled && !_answered)
@@ -506,6 +593,42 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                   );
                 },
               ),
+            ),
+          ),
+          // Direct fret input (type answer instead of tapping)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.keyboard, size: 18, color: Colors.grey[500]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: TextField(
+                      enabled: !_answered,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        hintText: 'Type fret number...',
+                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        isDense: true,
+                      ),
+                      onSubmitted: (value) {
+                        final fret = int.tryParse(value.trim());
+                        if (fret != null && fret >= widget.startFret && fret <= widget.endFret) {
+                          _checkAnswer(fret);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           // Bottom controls
