@@ -17,13 +17,13 @@ class FormInfoDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '📐 CAGED Octave Forms',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              '📐 ${AppLocalizations().t('octave_info_title')}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
-              'Each form shows 2-string octave shapes',
+              AppLocalizations().t('octave_info_sub'),
               style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
             const SizedBox(height: 12),
@@ -41,7 +41,7 @@ class FormInfoDialog extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: Text(AppLocalizations().t('close')),
             ),
           ],
         ),
