@@ -185,8 +185,13 @@ class _StageCard extends StatelessWidget {
             children: [
               Icon(icon, size: 44, color: Colors.white),
               const SizedBox(height: 6),
-              Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
+              Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, maxLines: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
+                  textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, maxLines: 1),
+              ),
             ],
           ),
         ),

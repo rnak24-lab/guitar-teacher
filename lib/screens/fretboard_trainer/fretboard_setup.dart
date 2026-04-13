@@ -336,18 +336,23 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Auto', style: TextStyle(fontSize: 12)),
-                Switch(
-                  value: _autoMode,
-                  onChanged: (v) => setState(() => _autoMode = v),
-                  activeColor: Colors.green,
+                const Text('Auto', style: TextStyle(fontSize: 11)),
+                SizedBox(
+                  width: 40,
+                  child: FittedBox(
+                    child: Switch(
+                      value: _autoMode,
+                      onChanged: (v) => setState(() => _autoMode = v),
+                      activeColor: Colors.green,
+                    ),
+                  ),
                 ),
               ],
             ),
           // Score display
           Center(child: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Text('$_score/$_total', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            padding: const EdgeInsets.only(right: 4),
+            child: Text('$_score/$_total', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           )),
           IconButton(
             icon: Icon(_showSettings ? Icons.expand_less : Icons.tune),
@@ -621,23 +626,26 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                         if (_seconds < 60) setState(() => _seconds++);
                       }),
                       const SizedBox(width: 8),
-                      ...[3, 5, 8, 10, 15].map((s) => Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _seconds = s.toDouble()),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _seconds.toInt() == s
-                                  ? const Color(0xFF8B6914) : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(8),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [3, 5, 8, 10, 15].map((s) => GestureDetector(
+                            onTap: () => setState(() => _seconds = s.toDouble()),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _seconds.toInt() == s
+                                    ? const Color(0xFF8B6914) : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('${s}s', style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold,
+                                color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
                             ),
-                            child: Text('${s}s', style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold,
-                              color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
-                          ),
+                          )).toList(),
                         ),
-                      )),
+                      ),
                     ],
                   ),
                   // Strings
@@ -679,7 +687,7 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                     children: [
                       const Icon(Icons.auto_awesome, size: 18, color: Color(0xFF4A90D9)),
                       const SizedBox(width: 8),
-                      const Text('Auto Reveal'),
+                      const Flexible(child: Text('Auto Reveal')),
                       Switch(
                         value: _autoRevealAnswer,
                         activeColor: const Color(0xFF4A90D9),
@@ -688,22 +696,24 @@ class _FretboardSetupState extends State<FretboardSetup> with TickerProviderStat
                       if (_autoRevealAnswer) ...[
                         const Text('Delay:', style: TextStyle(fontSize: 12)),
                         const SizedBox(width: 4),
-                        ...[0, 1, 2, 3].map((s) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _autoRevealDelay = s),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _autoRevealDelay == s ? const Color(0xFF4A90D9) : Colors.grey[300],
-                                borderRadius: BorderRadius.circular(8),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 4,
+                            children: [0, 1, 2, 3].map((s) => GestureDetector(
+                              onTap: () => setState(() => _autoRevealDelay = s),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _autoRevealDelay == s ? const Color(0xFF4A90D9) : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text('${s}s', style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold,
+                                  color: _autoRevealDelay == s ? Colors.white : Colors.grey[700])),
                               ),
-                              child: Text('${s}s', style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold,
-                                color: _autoRevealDelay == s ? Colors.white : Colors.grey[700])),
-                            ),
+                            )).toList(),
                           ),
-                        )),
+                        ),
                       ],
                     ],
                   ),

@@ -347,20 +347,28 @@ class _ScaleQuizState extends State<ScaleQuiz> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scale Quiz: ${widget.rootNote} ${widget.scaleName}'),
+        title: Text(
+          'Quiz: ${widget.rootNote} ${widget.scaleName}',
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           // Auto-advance timer toggle (3-second quiz)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('3s', style: TextStyle(fontSize: 12)),
-              Switch(
-                value: _autoTimerEnabled,
-                onChanged: (v) {
-                  setState(() => _autoTimerEnabled = v);
-                  if (v) _startAutoTimer(); else _autoTimer?.cancel();
-                },
-                activeColor: Colors.orange,
+              const Text('3s', style: TextStyle(fontSize: 11)),
+              SizedBox(
+                width: 40,
+                child: FittedBox(
+                  child: Switch(
+                    value: _autoTimerEnabled,
+                    onChanged: (v) {
+                      setState(() => _autoTimerEnabled = v);
+                      if (v) _startAutoTimer(); else _autoTimer?.cancel();
+                    },
+                    activeColor: Colors.orange,
+                  ),
+                ),
               ),
             ],
           ),
@@ -369,17 +377,22 @@ class _ScaleQuizState extends State<ScaleQuiz> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Auto', style: TextStyle(fontSize: 12)),
-                Switch(
-                  value: _autoMode,
-                  onChanged: (v) => setState(() => _autoMode = v),
-                  activeColor: Colors.green,
+                const Text('Auto', style: TextStyle(fontSize: 11)),
+                SizedBox(
+                  width: 40,
+                  child: FittedBox(
+                    child: Switch(
+                      value: _autoMode,
+                      onChanged: (v) => setState(() => _autoMode = v),
+                      activeColor: Colors.green,
+                    ),
+                  ),
                 ),
               ],
             ),
           TextButton(
             onPressed: _endQuiz,
-            child: const Text('End', style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: const Text('End', style: TextStyle(color: Colors.white, fontSize: 14)),
           ),
         ],
       ),

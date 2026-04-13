@@ -65,23 +65,26 @@ class _ChordSetupState extends State<ChordSetup> {
                   if (_seconds < 60) setState(() => _seconds++);
                 }),
                 const SizedBox(width: 12),
-                ...[3, 5, 8, 10, 15].map((s) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _seconds = s.toDouble()),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _seconds.toInt() == s
-                            ? const Color(0xFF8B6914) : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [3, 5, 8, 10, 15].map((s) => GestureDetector(
+                      onTap: () => setState(() => _seconds = s.toDouble()),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _seconds.toInt() == s
+                              ? const Color(0xFF8B6914) : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('${s}s', style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.bold,
+                          color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
                       ),
-                      child: Text('${s}s', style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold,
-                        color: _seconds.toInt() == s ? Colors.white : Colors.grey[700])),
-                    ),
+                    )).toList(),
                   ),
-                )),
+                ),
               ],
             ),
             const Spacer(),
