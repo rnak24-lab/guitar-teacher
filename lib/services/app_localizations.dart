@@ -39,6 +39,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': 'Later',
       'rate_now': 'Rate Now',
       'close': 'Close',
+      'sec_unit': 's',
 
       // Home
       'home_fretboard': 'Fretboard',
@@ -225,6 +226,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': '나중에',
       'rate_now': '평점 남기기',
       'close': '닫기',
+      'sec_unit': '초',
       'home_fretboard': '프렛보드',
       'home_fretboard_sub': '음 위치 외우기',
       'home_octave': '옥타브 폼',
@@ -392,6 +394,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': '後で',
       'rate_now': '評価する',
       'close': '閉じる',
+      'sec_unit': '秒',
 
       // Home
       'home_fretboard': 'フレットボード',
@@ -579,6 +582,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': '以后再说',
       'rate_now': '立即评分',
       'close': '关闭',
+      'sec_unit': '秒',
 
       // Home
       'home_fretboard': '指板',
@@ -766,6 +770,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': 'Để sau',
       'rate_now': 'Đánh giá ngay',
       'close': 'Đóng',
+      'sec_unit': 'giây',
 
       // Home
       'home_fretboard': 'Phím đàn',
@@ -953,6 +958,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': 'Plus tard',
       'rate_now': 'Noter maintenant',
       'close': 'Fermer',
+      'sec_unit': 's',
 
       // Home
       'home_fretboard': 'Manche',
@@ -1140,6 +1146,7 @@ class AppLocalizations extends ChangeNotifier {
       'later': 'Más tarde',
       'rate_now': 'Valorar ahora',
       'close': 'Cerrar',
+      'sec_unit': 's',
 
       // Home
       'home_fretboard': 'Diapasón',

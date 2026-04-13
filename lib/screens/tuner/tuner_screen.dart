@@ -26,6 +26,13 @@ class _TunerScreenState extends State<TunerScreen> {
   bool _autoAdvance = false;
   int _currentStringIndex = 0;
 
+  // Tuner sensitivity (cents tolerance for "in tune")
+  double _centsTolerance = 15.0;
+  // Hold-to-confirm: track how long pitch stays in range
+  DateTime? _inTuneSince;
+  bool _showSuccess = false;
+  static const _holdDuration = Duration(seconds: 2);
+
   // Shared pitch detector
   final PitchDetector _pitchDetector = PitchDetector();
   bool _permissionDenied = false;
@@ -36,14 +43,31 @@ class _TunerScreenState extends State<TunerScreen> {
     _applyTuning(_currentTuning);
     _loadTuningPreference();
     _pitchDetector.onPitchDetected = (freq, noteName, cents) {
-      if (!mounted) return;
+      if (!mounted || _showSuccess) return;
       setState(() {
         _detectedFrequency = freq;
         _cents = PitchDetector.calculateCents(freq, _tuningMap[_selectedString]!);
 
-        // Auto advance: within 5 cents
-        if (_autoAdvance && _cents.abs() < 5) {
-          _advanceToNext();
+        // Check if within tolerance
+        if (_cents.abs() < _centsTolerance) {
+          // Start or continue hold timer
+          _inTuneSince ??= DateTime.now();
+          final held = DateTime.now().difference(_inTuneSince!);
+          if (held >= _holdDuration) {
+            // Success!
+            _showSuccess = true;
+            if (_autoAdvance) {
+              Future.delayed(const Duration(milliseconds: 800), () {
+                if (mounted) {
+                  setState(() => _showSuccess = false);
+                  _advanceToNext();
+                }
+              });
+            }
+          }
+        } else {
+          // Out of range — reset hold
+          _inTuneSince = null;
         }
       });
     };
@@ -107,6 +131,8 @@ class _TunerScreenState extends State<TunerScreen> {
     setState(() {
       _selectedString = key;
       _currentStringIndex = _stringOrder.indexOf(key);
+      _inTuneSince = null;
+      _showSuccess = false;
     });
   }
 
@@ -145,7 +171,7 @@ class _TunerScreenState extends State<TunerScreen> {
   @override
   Widget build(BuildContext context) {
     final isListening = _pitchDetector.isListening;
-    final inTune = isListening && _cents.abs() < 5;
+    final inTune = isListening && _cents.abs() < _centsTolerance;
 
     return Scaffold(
       appBar: AppBar(
@@ -298,18 +324,24 @@ class _TunerScreenState extends State<TunerScreen> {
                             color: Colors.grey[500]),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _cents.abs() < 5
-                            ? 'In Tune!'
-                            : _cents > 0
-                                ? '${_cents.toStringAsFixed(0)}c sharp'
-                                : '${_cents.abs().toStringAsFixed(0)}c flat',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: inTune ? Colors.green : Colors.red,
+                      if (_showSuccess)
+                        const Text(
+                          'Perfect!',
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+                        )
+                      else
+                        Text(
+                          _cents.abs() < _centsTolerance
+                              ? 'In Tune! Hold...'
+                              : _cents > 0
+                                  ? '${_cents.toStringAsFixed(0)}c sharp'
+                                  : '${_cents.abs().toStringAsFixed(0)}c flat',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: inTune ? Colors.green : Colors.red,
+                          ),
                         ),
-                      ),
                     ],
                     if (isListening && _detectedFrequency <= 0)
                       const Text(
@@ -395,7 +427,7 @@ class _TunerDialPainter extends CustomPainter {
     if (cents != 0) {
       final angle = (cents / 50).clamp(-1.0, 1.0) * 1.2 - pi / 2;
       final np = Paint()
-        ..color = cents.abs() < 5 ? Colors.green : Colors.red
+        ..color = cents.abs() < 15 ? Colors.green : Colors.red
         ..strokeWidth = 3
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(

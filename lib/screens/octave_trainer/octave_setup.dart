@@ -192,7 +192,7 @@ class _OctaveSetupState extends State<OctaveSetup> with TickerProviderStateMixin
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Form $_currentFormNum  •  ${form.cagedName}',
+                          tr('octave_form_n').replaceAll('{n}', '$_currentFormNum'),
                           style: TextStyle(fontSize: 18, color: isDark ? Colors.orange[200] : Colors.orange[800]),
                         ),
                       ),

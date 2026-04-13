@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../services/app_localizations.dart';
 import '../../services/notification_service.dart';
@@ -17,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _reminderMinute = 0;
   bool _streakEnabled = true;
   bool _comebackEnabled = true;
+  bool _vibrationEnabled = true;
   String _noteSystem = NoteNameProvider().system;
 
   @override
@@ -28,6 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadReminderSettings() async {
     final s = await NotificationService().getSettings();
     final prefs = await NotificationService().getAllPreferences();
+    final sp = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
         _reminderEnabled = s.enabled;
@@ -35,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _reminderMinute = s.minute;
         _streakEnabled = prefs.streak;
         _comebackEnabled = prefs.comeback;
+        _vibrationEnabled = sp.getBool('global_vibration') ?? true;
       });
     }
   }
@@ -109,35 +113,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showVolumeDialog(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.vibration),
+          SwitchListTile(
+            secondary: const Icon(Icons.vibration),
             title: Text(tr('settings_vibration')),
-            subtitle: Text(tr('settings_vibration_on')),
-            trailing: IconButton(
-              icon: Icon(Icons.help_outline, size: 20, color: Colors.grey[400]),
-              tooltip: tr('settings_vibration_desc'),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Row(
-                      children: [
-                        const Icon(Icons.vibration, size: 20),
-                        const SizedBox(width: 8),
-                        Text(tr('settings_vibration')),
-                      ],
-                    ),
-                    content: Text(tr('settings_vibration_desc')),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            subtitle: Text(_vibrationEnabled ? tr('settings_vibration_on') : tr('settings_vibration_off')),
+            value: _vibrationEnabled,
+            onChanged: (val) async {
+              setState(() => _vibrationEnabled = val);
+              final sp = await SharedPreferences.getInstance();
+              await sp.setBool('global_vibration', val);
+              // Also sync metronome vibration preference
+              await sp.setBool('metronome_vibration', val);
+            },
           ),
           const Divider(),
 

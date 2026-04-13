@@ -83,7 +83,7 @@ class _FormCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(form.cagedName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(AppLocalizations().t('octave_form_n').replaceAll('{n}', '${form.formNumber}'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
                 Text(
                   AppLocalizations().locale == 'ko' ? form.descriptionKo : form.description,

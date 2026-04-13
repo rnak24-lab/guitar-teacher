@@ -65,12 +65,12 @@ class _ScaleSetupState extends State<ScaleSetup> {
                   const Text('Note Order',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       _orderChip('Chromatic', null, accent),
-                      const SizedBox(width: 8),
                       _orderChip('4th Circle', '4th', accent),
-                      const SizedBox(width: 8),
                       _orderChip('5th Circle', '5th', accent),
                     ],
                   ),
@@ -290,12 +290,13 @@ class _ScaleSetupState extends State<ScaleSetup> {
                   ),
                   const SizedBox(height: 8),
                   // ── Preset buttons ──
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text('Presets: ', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                      const SizedBox(width: 4),
                       _presetChip('High (1-3)', [true, true, true, false, false, false], accent),
-                      const SizedBox(width: 6),
                       _presetChip('Low (4-6)', [false, false, false, true, true, true], accent),
                     ],
                   ),

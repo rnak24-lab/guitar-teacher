@@ -37,8 +37,11 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   bool _vibrationEnabled = false;
   bool _soundEnabled = true;
 
-  final AudioPlayer _highPlayer = AudioPlayer();
-  final AudioPlayer _lowPlayer = AudioPlayer();
+  // Use a pool of AudioPlayers to avoid stop/play race conditions
+  final List<AudioPlayer> _highPlayers = List.generate(3, (_) => AudioPlayer());
+  final List<AudioPlayer> _lowPlayers = List.generate(3, (_) => AudioPlayer());
+  int _highIdx = 0;
+  int _lowIdx = 0;
 
   // ── Tap Tempo state ──
   final List<int> _tapTimestamps = [];
@@ -127,11 +130,13 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   void _playBeat(bool isDownbeat) {
     if (_soundEnabled) {
       if (isDownbeat) {
-        _highPlayer.stop();
-        _highPlayer.play(AssetSource('sounds/click_high.wav'));
+        final player = _highPlayers[_highIdx % _highPlayers.length];
+        _highIdx++;
+        player.stop().then((_) => player.play(AssetSource('sounds/click_high.wav')));
       } else {
-        _lowPlayer.stop();
-        _lowPlayer.play(AssetSource('sounds/click_low.wav'));
+        final player = _lowPlayers[_lowIdx % _lowPlayers.length];
+        _lowIdx++;
+        player.stop().then((_) => player.play(AssetSource('sounds/click_low.wav')));
       }
     }
     if (_vibrationEnabled) {
@@ -230,8 +235,8 @@ class _MetronomeScreenState extends State<MetronomeScreen>
   @override
   void dispose() {
     _timer?.cancel();
-    _highPlayer.dispose();
-    _lowPlayer.dispose();
+    for (final p in _highPlayers) { p.dispose(); }
+    for (final p in _lowPlayers) { p.dispose(); }
     super.dispose();
   }
 

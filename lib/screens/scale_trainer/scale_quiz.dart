@@ -55,6 +55,11 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   double _detectedFrequency = 0;
   String _detectedNote = '';
 
+  // ── Auto-advance timer (3-second quiz) ──
+  bool _autoTimerEnabled = false;
+  Timer? _autoTimer;
+  int _autoTimeLeft = 3;
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +109,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
 
   @override
   void dispose() {
+    _autoTimer?.cancel();
     _pitchDetector.dispose();
     super.dispose();
   }
@@ -120,6 +126,26 @@ class _ScaleQuizState extends State<ScaleQuiz> {
         if (mounted) _nextQuestion();
       });
     }
+  }
+
+  void _startAutoTimer() {
+    _autoTimer?.cancel();
+    if (!_autoTimerEnabled) return;
+    _autoTimeLeft = 3;
+    _autoTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      setState(() => _autoTimeLeft--);
+      if (_autoTimeLeft <= 0) {
+        timer.cancel();
+        if (!_answered) {
+          // Time expired — show answer then move on
+          setState(() { _showAnswer = true; _answered = true; });
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) _nextQuestion();
+          });
+        }
+      }
+    });
   }
 
   void _nextQuestion() {
@@ -149,6 +175,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     _detectedFrequency = 0;
     _detectedNote = '';
     if (!_micEnabled) _totalQuestions++;
+    _startAutoTimer();
     setState(() {});
   }
 
@@ -256,7 +283,22 @@ class _ScaleQuizState extends State<ScaleQuiz> {
       appBar: AppBar(
         title: Text('Scale Quiz: ${widget.rootNote} ${widget.scaleName}'),
         actions: [
-          // Auto toggle
+          // Auto-advance timer toggle (3-second quiz)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('3s', style: TextStyle(fontSize: 12)),
+              Switch(
+                value: _autoTimerEnabled,
+                onChanged: (v) {
+                  setState(() => _autoTimerEnabled = v);
+                  if (v) _startAutoTimer(); else _autoTimer?.cancel();
+                },
+                activeColor: Colors.orange,
+              ),
+            ],
+          ),
+          // Mic auto toggle
           if (_micEnabled)
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -348,6 +390,15 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                   )),
                 Text('on String $_questionString?',
                   style: TextStyle(fontSize: 20, color: isDark ? Colors.grey[300] : Colors.brown[600])),
+                if (_autoTimerEnabled && !_answered)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '$_autoTimeLeft',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold,
+                        color: _autoTimeLeft <= 1 ? Colors.red : Colors.orange),
+                    ),
+                  ),
                 if (_micEnabled)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),

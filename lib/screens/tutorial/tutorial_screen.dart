@@ -50,7 +50,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
       icon: Icons.layers,
       title: 'Octave Forms',
       description:
-          'Learn the CAGED octave shapes.\n'
+          'Learn the 5 octave forms.\n'
           'Visualize how the same note repeats across the fretboard in different octave patterns.',
       color: Color(0xFFE67E22),
     ),

@@ -97,7 +97,7 @@ class _OctaveGameState extends State<OctaveGame> {
                     style: const TextStyle(fontSize: 24, color: Colors.grey),
                   ),
                   Text(
-                    form.cagedName,
+                    'Root (Octave)',
                     style: TextStyle(fontSize: 18, color: Colors.orange[700]),
                   ),
                   const SizedBox(height: 16),
@@ -111,7 +111,7 @@ class _OctaveGameState extends State<OctaveGame> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '$_timeLeft초',
+                    '$_timeLeft${AppLocalizations().t('sec_unit')}',
                     style: TextStyle(
                       fontSize: 32,
                       color: _timeLeft > 3 ? Colors.grey : Colors.red,

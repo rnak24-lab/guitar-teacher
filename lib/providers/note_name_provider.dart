@@ -82,24 +82,11 @@ class NoteNameProvider {
     return notes.map(display).toList();
   }
 
-  /// Convert a chord name for display.
-  /// Input: 'Am', 'C#m7', 'Bb7', etc.
-  /// Extracts the root note (1-2 chars), converts it, keeps the rest.
+  /// Display chord name — always keep original alphabet notation.
+  /// Chord names like Am7, C#m7, Bb7 must NEVER be converted to solfege
+  /// (e.g. Am7 must NOT become Lam7). This is per representative's directive.
   String displayChord(String chordName) {
-    if (_system == 'alphabet') return chordName;
-    if (chordName.isEmpty) return chordName;
-
-    // Try 2-char root first (e.g. 'Bb', 'C#', 'Db', 'Eb')
-    if (chordName.length >= 2 && (chordName[1] == 'b' || chordName[1] == '#')) {
-      final root = chordName.substring(0, 2);
-      final suffix = chordName.substring(2);
-      return '${display(root)}$suffix';
-    }
-
-    // Single-char root (e.g. 'C', 'A', 'G')
-    final root = chordName[0];
-    final suffix = chordName.substring(1);
-    return '${display(root)}$suffix';
+    return chordName;
   }
 
   /// Called when locale changes to reset default if user hasn't explicitly set

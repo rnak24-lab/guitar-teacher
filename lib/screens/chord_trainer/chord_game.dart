@@ -131,7 +131,7 @@ class _ChordGameState extends State<ChordGame> {
                   Text(_currentChord.type, style: TextStyle(fontSize: 18, color: Colors.brown[400])),
                   const SizedBox(height: 8),
                   if (!_paused)
-                    Text('$_timeLeft초', style: TextStyle(fontSize: 32,
+                    Text('$_timeLeft${AppLocalizations().t('sec_unit')}', style: TextStyle(fontSize: 32,
                       color: _timeLeft > 2 ? Colors.brown : Colors.red)),
                   const SizedBox(height: 16),
                   // 코드 다이어그램
