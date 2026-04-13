@@ -6,6 +6,7 @@ import '../../services/pitch_detector.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../data/tuning_presets.dart';
 import '../../providers/note_name_provider.dart';
+import '../../services/tone_generator.dart';
 
 class TunerScreen extends StatefulWidget {
   const TunerScreen({super.key});
@@ -32,6 +33,9 @@ class _TunerScreenState extends State<TunerScreen> {
   DateTime? _inTuneSince;
   bool _showSuccess = false;
   static const _holdDuration = Duration(seconds: 2);
+
+  // Tone generator for Play button
+  final ToneGenerator _toneGenerator = ToneGenerator();
 
   // Shared pitch detector
   final PitchDetector _pitchDetector = PitchDetector();
@@ -76,6 +80,7 @@ class _TunerScreenState extends State<TunerScreen> {
   @override
   void dispose() {
     _pitchDetector.dispose();
+    _toneGenerator.dispose();
     super.dispose();
   }
 
@@ -262,6 +267,58 @@ class _TunerScreenState extends State<TunerScreen> {
                 ),
               );
             }).toList(),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Play reference tone button
+          GestureDetector(
+            onTap: () async {
+              if (_toneGenerator.isPlaying) {
+                await _toneGenerator.stop();
+                setState(() {});
+              } else {
+                final freq = _tuningMap[_selectedString]!;
+                await _toneGenerator.playTone(freq);
+                setState(() {});
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: _toneGenerator.isPlaying
+                    ? Colors.orange[700]
+                    : const Color(0xFF5D3A00).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _toneGenerator.isPlaying
+                      ? Colors.orange
+                      : const Color(0xFF8B6914),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _toneGenerator.isPlaying ? Icons.stop : Icons.volume_up,
+                    size: 20,
+                    color: _toneGenerator.isPlaying ? Colors.white : const Color(0xFF5D3A00),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _toneGenerator.isPlaying
+                        ? 'Stop'
+                        : 'Play ${NoteNameProvider().display(_selectedString.substring(1))} (${_targetFreq.toStringAsFixed(1)} Hz)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _toneGenerator.isPlaying ? Colors.white : const Color(0xFF5D3A00),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
           const Spacer(),
