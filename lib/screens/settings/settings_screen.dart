@@ -15,6 +15,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _reminderEnabled = false;
   int _reminderHour = 20;
   int _reminderMinute = 0;
+  bool _streakEnabled = true;
+  bool _comebackEnabled = true;
   String _noteSystem = NoteNameProvider().system;
 
   @override
@@ -25,11 +27,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadReminderSettings() async {
     final s = await NotificationService().getSettings();
+    final prefs = await NotificationService().getAllPreferences();
     if (mounted) {
       setState(() {
         _reminderEnabled = s.enabled;
         _reminderHour = s.hour;
         _reminderMinute = s.minute;
+        _streakEnabled = prefs.streak;
+        _comebackEnabled = prefs.comeback;
       });
     }
   }
@@ -149,6 +154,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: _pickReminderTime,
             ),
+          SwitchListTile(
+            title: Text(tr('settings_streak_notif')),
+            subtitle: Text(tr('settings_streak_notif_desc')),
+            secondary: const Icon(Icons.local_fire_department),
+            value: _streakEnabled,
+            onChanged: (v) async {
+              setState(() => _streakEnabled = v);
+              await NotificationService().setStreakEnabled(v);
+            },
+          ),
+          SwitchListTile(
+            title: Text(tr('settings_comeback_notif')),
+            subtitle: Text(tr('settings_comeback_notif_desc')),
+            secondary: const Icon(Icons.waving_hand),
+            value: _comebackEnabled,
+            onChanged: (v) async {
+              setState(() => _comebackEnabled = v);
+              await NotificationService().setComebackEnabled(v);
+            },
+          ),
           const Divider(),
 
           // === Guitar Settings ===

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'app_localizations.dart';
+import 'practice_record.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -12,31 +13,77 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
+  // Channel IDs
   static const _channelId = 'practice_reminder';
   static const _channelName = 'Practice Reminder';
+  static const _streakChannelId = 'streak_notification';
+  static const _streakChannelName = 'Streak Notification';
+  static const _comebackChannelId = 'comeback_reminder';
+  static const _comebackChannelName = 'Comeback Reminder';
+
+  // Notification IDs
   static const _notifId = 100;
+  static const _streakNotifId = 200;
+  static const _comebackNotifId = 300;
 
   // Pref keys
   static const _keyEnabled = 'reminder_enabled';
   static const _keyHour = 'reminder_hour';
   static const _keyMinute = 'reminder_minute';
+  static const _keyStreakEnabled = 'streak_notif_enabled';
+  static const _keyComebackEnabled = 'comeback_notif_enabled';
+  static const _keyLastOpenDate = 'last_app_open_date';
 
-  /// Localized notification body messages keyed by language code.
+  // ── Localized messages ──
+
   static const Map<String, String> _localizedBody = {
     'ko': '오늘 기타 연습 했나요? 함께 연습해요!',
     'ja': '今日ギターの練習はしましたか？一緒に練習しましょう！',
     'zh': '今天练吉他了吗？一起来练习吧！',
     'vi': 'Hom nay ban da tap guitar chua? Hay cung tap nao!',
-    'fr': 'Avez-vous pratique la guitare aujourd\'hui ? Jouons ensemble !',
-    'es': 'Practicaste guitarra hoy? Toquemos juntos!',
+    'fr': 'Avez-vous pratiqué la guitare aujourd\'hui ? Jouons ensemble !',
+    'es': '¿Practicaste guitarra hoy? ¡Toquemos juntos!',
     'en': 'Did you practice guitar today? Let\'s play together!',
   };
 
-  /// Get the notification body in the current app language.
+  static final Map<String, String Function(int)> _streakBody = {
+    'ko': (d) => '$d일 연속 연습 중! 이 기세 이어가요',
+    'ja': (d) => '$d日連続練習中！この調子で続けましょう',
+    'zh': (d) => '连续练习$d天！继续保持',
+    'vi': (d) => 'Tap lien tuc $d ngay! Hay giu vung nhip do',
+    'fr': (d) => '$d jours consecutifs ! Continuez ainsi',
+    'es': (d) => '$d dias seguidos practicando! Sigue asi!',
+    'en': (d) => '$d-day streak! Keep up the momentum',
+  };
+
+  static final Map<String, String Function(int)> _comebackBody = {
+    'ko': (d) => '$d일째 연습을 쉬셨네요. 잠깐 튜닝부터 시작해볼까요?',
+    'ja': (d) => '$d日間練習をお休みですね。チューニングから始めませんか？',
+    'zh': (d) => '已经$d天没练习了，从调音开始吧？',
+    'vi': (d) => 'Da $d ngay chua tap roi. Bat dau tu viec len day nhe?',
+    'fr': (d) => '$d jours sans pratiquer. On commence par l\'accordage ?',
+    'es': (d) => '$d dias sin practicar. Empezamos afinando?',
+    'en': (d) => "You've been away for $d days. Start with a quick tune-up?",
+  };
+
   String _getLocalizedBody() {
     final lang = AppLocalizations().locale;
     return _localizedBody[lang] ?? _localizedBody['en']!;
   }
+
+  String _getStreakBody(int days) {
+    final lang = AppLocalizations().locale;
+    final fn = _streakBody[lang] ?? _streakBody['en']!;
+    return fn(days);
+  }
+
+  String _getComebackBody(int days) {
+    final lang = AppLocalizations().locale;
+    final fn = _comebackBody[lang] ?? _comebackBody['en']!;
+    return fn(days);
+  }
+
+  // ── Init ──
 
   Future<void> init() async {
     tzdata.initializeTimeZones();
@@ -55,7 +102,8 @@ class NotificationService {
     await _plugin.initialize(settings);
   }
 
-  /// Read saved reminder settings.
+  // ── Daily Reminder Settings ──
+
   Future<({bool enabled, int hour, int minute})> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
     return (
@@ -65,7 +113,6 @@ class NotificationService {
     );
   }
 
-  /// Save and apply reminder settings.
   Future<void> setReminder({
     required bool enabled,
     required int hour,
@@ -119,12 +166,124 @@ class NotificationService {
     );
   }
 
+  // ── Streak Notification ──
+
+  Future<bool> isStreakEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyStreakEnabled) ?? true; // default ON
+  }
+
+  Future<void> setStreakEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyStreakEnabled, enabled);
+  }
+
+  /// Show streak notification immediately when a practice session ends.
+  /// Call this after saving a PracticeSession.
+  Future<void> checkAndShowStreak() async {
+    if (!(await isStreakEnabled())) return;
+
+    final stats = await PracticeRecord.getWeeklyStats();
+    final streak = stats.streak;
+
+    // Only notify on milestones: 3, 5, 7, 10, 14, 21, 30, ...
+    if (!_isStreakMilestone(streak)) return;
+
+    final body = _getStreakBody(streak);
+
+    final androidDetails = AndroidNotificationDetails(
+      _streakChannelId,
+      _streakChannelName,
+      channelDescription: 'Practice streak achievements',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _plugin.show(_streakNotifId, 'Guitar Educator', body, details);
+  }
+
+  bool _isStreakMilestone(int streak) {
+    return streak == 3 || streak == 5 || streak == 7 ||
+           streak == 10 || streak == 14 || streak == 21 ||
+           streak == 30 || (streak > 30 && streak % 10 == 0);
+  }
+
+  // ── Comeback (Inactivity) Reminder ──
+
+  Future<bool> isComebackEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyComebackEnabled) ?? true; // default ON
+  }
+
+  Future<void> setComebackEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyComebackEnabled, enabled);
+    if (!enabled) {
+      await _plugin.cancel(_comebackNotifId);
+    }
+  }
+
+  /// Record the current date as last app-open date.
+  Future<void> recordAppOpen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLastOpenDate, DateTime.now().toIso8601String());
+  }
+
+  /// Schedule a comeback reminder 3 days from now.
+  /// Call on each app open; it resets the 3-day timer.
+  Future<void> scheduleComebackReminder() async {
+    if (!(await isComebackEnabled())) return;
+
+    await _plugin.cancel(_comebackNotifId);
+
+    final now = tz.TZDateTime.now(tz.local);
+    // Schedule for 3 days later at 19:00
+    final scheduled = tz.TZDateTime(
+      tz.local, now.year, now.month, now.day + 3, 19, 0,
+    );
+
+    final body = _getComebackBody(3);
+
+    final androidDetails = AndroidNotificationDetails(
+      _comebackChannelId,
+      _comebackChannelName,
+      channelDescription: 'Reminds you to come back after inactivity',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _plugin.zonedSchedule(
+      _comebackNotifId,
+      'Guitar Educator',
+      body,
+      scheduled,
+      details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  // ── Restore / Refresh ──
+
   /// Re-schedule on app start if enabled (picks current locale).
   Future<void> restoreIfEnabled() async {
     final s = await getSettings();
     if (s.enabled) {
       await _scheduleDailyNotification(s.hour, s.minute);
     }
+    // Always reset comeback timer on app open
+    await recordAppOpen();
+    await scheduleComebackReminder();
   }
 
   /// Call when user changes app language so notification text updates.
@@ -133,5 +292,17 @@ class NotificationService {
     if (s.enabled) {
       await _scheduleDailyNotification(s.hour, s.minute);
     }
+    // Re-schedule comeback with updated locale
+    await scheduleComebackReminder();
+  }
+
+  /// Get all notification preferences for the settings screen.
+  Future<({bool reminder, bool streak, bool comeback})> getAllPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (
+      reminder: prefs.getBool(_keyEnabled) ?? false,
+      streak: prefs.getBool(_keyStreakEnabled) ?? true,
+      comeback: prefs.getBool(_keyComebackEnabled) ?? true,
+    );
   }
 }

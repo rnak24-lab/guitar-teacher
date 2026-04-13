@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
 
 class PracticeSession {
   final String type; // fretboard, octave, chord, scale, metronome
@@ -69,6 +70,8 @@ class PracticeRecord {
     final cutoff = DateTime.now().subtract(const Duration(days: 90));
     records.removeWhere((r) => r.timestamp.isBefore(cutoff));
     await prefs.setString(_key, jsonEncode(records.map((r) => r.toJson()).toList()));
+    // Trigger streak notification check after saving
+    await NotificationService().checkAndShowStreak();
   }
 
   static Future<List<PracticeSession>> _loadAll(SharedPreferences prefs) async {
