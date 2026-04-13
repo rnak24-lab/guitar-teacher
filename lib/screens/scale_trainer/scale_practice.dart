@@ -14,6 +14,7 @@ class ScalePractice extends StatefulWidget {
   final String scaleName;
   final int startFret;
   final int endFret;
+  final List<bool>? enabledStrings; // 6-element list, index 0=1st string
 
   const ScalePractice({
     super.key,
@@ -21,6 +22,7 @@ class ScalePractice extends StatefulWidget {
     required this.scaleName,
     required this.startFret,
     required this.endFret,
+    this.enabledStrings,
   });
 
   @override
@@ -328,7 +330,12 @@ class _ScalePracticeState extends State<ScalePractice> {
   }
 
   Widget _buildFretboard(bool isDark) {
-    final strings = GuitarString.standard;
+    final allStrings = GuitarString.standard;
+    final enabled = widget.enabledStrings ?? List.filled(6, true);
+    final strings = <GuitarString>[];
+    for (int i = 0; i < allStrings.length; i++) {
+      if (enabled[i]) strings.add(allStrings[i]);
+    }
     final fretCount = widget.endFret - widget.startFret + 1;
     const cellW = 50.0;
     const cellH = 36.0;

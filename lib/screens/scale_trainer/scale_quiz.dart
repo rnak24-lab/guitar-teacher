@@ -17,6 +17,7 @@ class ScaleQuiz extends StatefulWidget {
   final String scaleName;
   final int startFret;
   final int endFret;
+  final List<bool>? enabledStrings;
 
   const ScaleQuiz({
     super.key,
@@ -24,6 +25,7 @@ class ScaleQuiz extends StatefulWidget {
     required this.scaleName,
     required this.startFret,
     required this.endFret,
+    this.enabledStrings,
   });
 
   @override
@@ -122,7 +124,14 @@ class _ScaleQuizState extends State<ScaleQuiz> {
 
   void _nextQuestion() {
     _questionNote = _scaleNotes[_random.nextInt(_scaleNotes.length)];
-    _questionString = _random.nextInt(6) + 1;
+    // Pick only from enabled strings
+    final enabled = widget.enabledStrings ?? List.filled(6, true);
+    final availableStrings = <int>[];
+    for (int i = 0; i < 6; i++) {
+      if (enabled[i]) availableStrings.add(i + 1);
+    }
+    if (availableStrings.isEmpty) availableStrings.addAll([1, 2, 3, 4, 5, 6]);
+    _questionString = availableStrings[_random.nextInt(availableStrings.length)];
     final gs = GuitarString.standard.firstWhere((s) => s.number == _questionString);
     _correctFrets = [];
     for (int f = widget.startFret; f <= widget.endFret; f++) {

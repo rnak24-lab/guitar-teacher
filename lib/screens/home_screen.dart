@@ -6,6 +6,7 @@ import 'octave_trainer/octave_setup.dart';
 import 'chord_trainer/chord_setup.dart';
 import 'chord_trainer/chord_sequence_screen.dart';
 import 'scale_trainer/scale_setup.dart';
+import 'scale_trainer/box_pattern_screen.dart';
 import 'tuner/tuner_screen.dart';
 import 'metronome/metronome_screen.dart';
 import 'practice_stats/practice_stats_screen.dart';
@@ -59,6 +60,9 @@ class HomeScreen extends StatelessWidget {
                   _StageCard(icon: Icons.queue_music, title: tr('home_scale'), subtitle: tr('home_scale_sub'),
                     color: const Color(0xFF2980B9),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScaleSetup()))),
+                  _StageCard(icon: Icons.grid_on, title: tr('home_box_pattern'), subtitle: tr('home_box_pattern_sub'),
+                    color: const Color(0xFF6C5B7B),
+                    onTap: () => _showBoxPatternDialog(context)),
                   _StageCard(icon: Icons.playlist_play, title: tr('home_sequence'), subtitle: tr('home_sequence_sub'),
                     color: const Color(0xFFD4A017),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChordSequenceScreen()))),
@@ -83,6 +87,72 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showBoxPatternDialog(BuildContext context) {
+  String selectedRoot = 'C';
+  String selectedType = 'pentatonic';
+  showDialog(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        title: const Text('Box Pattern'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Root Note', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'].map((n) =>
+                ChoiceChip(
+                  label: Text(n, style: const TextStyle(fontSize: 13)),
+                  selected: selectedRoot == n,
+                  selectedColor: const Color(0xFF8B6914),
+                  labelStyle: TextStyle(color: selectedRoot == n ? Colors.white : null),
+                  onSelected: (_) => setDialogState(() => selectedRoot = n),
+                ),
+              ).toList(),
+            ),
+            const SizedBox(height: 16),
+            const Text('Pattern Type', style: TextStyle(fontWeight: FontWeight.bold)),
+            RadioListTile<String>(
+              title: const Text('Pentatonic Minor (5 positions)'),
+              value: 'pentatonic',
+              groupValue: selectedType,
+              onChanged: (v) => setDialogState(() => selectedType = v!),
+              dense: true,
+            ),
+            RadioListTile<String>(
+              title: const Text('Major Scale (7 positions)'),
+              value: 'major',
+              groupValue: selectedType,
+              onChanged: (v) => setDialogState(() => selectedType = v!),
+              dense: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => BoxPatternScreen(
+                  rootNote: selectedRoot,
+                  patternType: selectedType,
+                ),
+              ));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B6914)),
+            child: const Text('Open', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _StageCard extends StatelessWidget {

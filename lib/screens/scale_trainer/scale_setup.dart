@@ -29,6 +29,9 @@ class _ScaleSetupState extends State<ScaleSetup> {
   /// null = chromatic order, '4th' = circle of 4ths, '5th' = circle of 5ths
   String? _circleMode;
 
+  /// Per-string enable/disable (1~6), all enabled by default
+  final List<bool> _stringEnabled = List.filled(6, true);
+
   List<String> get _orderedNotes {
     if (_circleMode == '4th') return _circleOf4ths;
     if (_circleMode == '5th') return _circleOf5ths;
@@ -228,6 +231,72 @@ class _ScaleSetupState extends State<ScaleSetup> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // ── String enable/disable toggle ──
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Strings',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          final allOn = _stringEnabled.every((e) => e);
+                          for (int i = 0; i < 6; i++) {
+                            _stringEnabled[i] = !allOn;
+                          }
+                        }),
+                        child: Text(_stringEnabled.every((e) => e) ? 'Deselect All' : 'Select All'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(6, (i) {
+                      final gs = ['1E','2B','3G','4D','5A','6E'];
+                      return FilterChip(
+                        label: Text(gs[i],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _stringEnabled[i] ? Colors.white : null,
+                            )),
+                        selected: _stringEnabled[i],
+                        selectedColor: accent,
+                        checkmarkColor: Colors.white,
+                        onSelected: (v) {
+                          setState(() => _stringEnabled[i] = v);
+                          // Prevent all strings from being disabled
+                          if (!_stringEnabled.any((e) => e)) {
+                            setState(() => _stringEnabled[i] = true);
+                          }
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 8),
+                  // ── Preset buttons ──
+                  Row(
+                    children: [
+                      const Text('Presets: ', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                      const SizedBox(width: 4),
+                      _presetChip('High (1-3)', [true, true, true, false, false, false], accent),
+                      const SizedBox(width: 6),
+                      _presetChip('Low (4-6)', [false, false, false, true, true, true], accent),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // ── Mode buttons ──
@@ -272,6 +341,19 @@ class _ScaleSetupState extends State<ScaleSetup> {
     );
   }
 
+  Widget _presetChip(String label, List<bool> preset, Color accent) {
+    final isActive = List.generate(6, (i) => _stringEnabled[i] == preset[i]).every((e) => e);
+    return ActionChip(
+      label: Text(label, style: TextStyle(fontSize: 12, color: isActive ? Colors.white : null)),
+      backgroundColor: isActive ? accent : null,
+      onPressed: () => setState(() {
+        for (int i = 0; i < 6; i++) {
+          _stringEnabled[i] = preset[i];
+        }
+      }),
+    );
+  }
+
   Widget _orderChip(String label, String? mode, Color accent) {
     final isActive = _circleMode == mode;
     return ChoiceChip(
@@ -300,6 +382,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
           scaleName: _selectedScale,
           startFret: _startFret,
           endFret: _endFret,
+          enabledStrings: List.from(_stringEnabled),
         ),
       ),
     );
@@ -314,6 +397,7 @@ class _ScaleSetupState extends State<ScaleSetup> {
           scaleName: _selectedScale,
           startFret: _startFret,
           endFret: _endFret,
+          enabledStrings: List.from(_stringEnabled),
         ),
       ),
     );
