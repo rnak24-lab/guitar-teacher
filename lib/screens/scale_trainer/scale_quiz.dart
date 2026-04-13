@@ -54,6 +54,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
   bool _autoMode = false;
   double _detectedFrequency = 0;
   String _detectedNote = '';
+  String _pitchHint = ''; // 'low', 'high', or '' — guides user
 
   // ── Auto-advance timer (3-second quiz) ──
   bool _autoTimerEnabled = false;
@@ -75,10 +76,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
       });
 
       // Check if detected note matches any correct fret's note
-      // Using A/B frequency matching: same note name on any octave is accepted
       if (_micEnabled && !_answered) {
-        // The question asks for _questionNote on String _questionString
-        // Check if the played frequency matches the note at any correct fret
         bool matched = false;
         for (final fret in _correctFrets) {
           if (PitchDetector.isFrequencyMatch(
@@ -99,7 +97,23 @@ class _ScaleQuizState extends State<ScaleQuiz> {
         }
 
         if (matched) {
+          setState(() => _pitchHint = '');
           _handleCorrectMicAnswer();
+        } else if (freq > 0 && _correctFrets.isNotEmpty) {
+          // Show low/high hint based on closest correct fret frequency
+          final targetFreq = PitchDetector.frequencyForStringFret(
+            _questionString, _correctFrets.first,
+          );
+          final centsOff = PitchDetector.calculateCents(freq, targetFreq);
+          setState(() {
+            if (centsOff < -80) {
+              _pitchHint = 'low';
+            } else if (centsOff > 80) {
+              _pitchHint = 'high';
+            } else {
+              _pitchHint = '';
+            }
+          });
         }
       }
     };
@@ -174,6 +188,7 @@ class _ScaleQuizState extends State<ScaleQuiz> {
     _answered = false;
     _detectedFrequency = 0;
     _detectedNote = '';
+    _pitchHint = '';
     if (!_micEnabled) _totalQuestions++;
     _startAutoTimer();
     setState(() {});
@@ -361,12 +376,41 @@ class _ScaleQuizState extends State<ScaleQuiz> {
                 children: [
                   Icon(Icons.mic, size: 16, color: Colors.purple[400]),
                   const SizedBox(width: 6),
-                  if (_detectedFrequency > 0)
+                  if (_detectedFrequency > 0) ...[
                     Text(
                       '$_detectedNote  ${_detectedFrequency.toStringAsFixed(0)}Hz',
                       style: TextStyle(fontSize: 13, color: Colors.purple[600]),
-                    )
-                  else
+                    ),
+                    if (_pitchHint.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _pitchHint == 'low' ? Colors.blue.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _pitchHint == 'low' ? Icons.arrow_downward : Icons.arrow_upward,
+                              size: 14,
+                              color: _pitchHint == 'low' ? Colors.blue : Colors.red,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              _pitchHint == 'low' ? 'Too low' : 'Too high',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _pitchHint == 'low' ? Colors.blue : Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ] else
                     Text('Play the note on your guitar...', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
                   if (_autoMode) ...[
                     const Spacer(),
