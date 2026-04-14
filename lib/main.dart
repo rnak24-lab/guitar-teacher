@@ -8,9 +8,17 @@ import 'providers/note_name_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService().init();
-  await NotificationService().restoreIfEnabled();
-  await AdService().init();
+  try {
+    await NotificationService().init();
+    await NotificationService().restoreIfEnabled();
+  } catch (_) {
+    // Notification init may fail on some devices — don't block app launch
+  }
+  try {
+    await AdService().init();
+  } catch (_) {
+    // Ad init failure should not block app launch
+  }
   await NoteNameProvider().init();
   runApp(const GuitarTeacherApp());
 }
