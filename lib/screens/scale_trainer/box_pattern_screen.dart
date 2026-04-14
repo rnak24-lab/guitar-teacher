@@ -6,6 +6,8 @@ import '../../widgets/ad_banner_widget.dart';
 import '../../providers/note_name_provider.dart';
 
 /// Displays a selected box pattern on the fretboard diagram.
+/// Supports in-screen key changes: when root note changes,
+/// all form positions (2~5/7) update automatically.
 class BoxPatternScreen extends StatefulWidget {
   final String rootNote;
 
@@ -25,30 +27,52 @@ class BoxPatternScreen extends StatefulWidget {
 class _BoxPatternScreenState extends State<BoxPatternScreen> {
   int _selectedPosition = 0;
   bool _showNoteNames = true;
+  late String _currentRoot;
+  late String _currentType;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentRoot = widget.rootNote;
+    _currentType = widget.patternType;
+  }
 
   List<BoxPattern> get _patterns =>
-      widget.patternType == 'pentatonic'
+      _currentType == 'pentatonic'
           ? BoxPattern.pentatonicMinor
           : BoxPattern.majorScale;
 
   String get _title =>
-      widget.patternType == 'pentatonic'
+      _currentType == 'pentatonic'
           ? 'Pentatonic Box Patterns'
           : 'Major Scale Box Patterns';
 
   /// Calculate the starting fret for the selected pattern & root.
   int _startFretForRoot() {
-    // Root note determines the starting fret position.
-    // Position 1 starts at the root note on the 6th string.
-    final rootIdx = Note.noteIndex(widget.rootNote);
-    // 6th string is open E (index 4)
+    final rootIdx = Note.noteIndex(_currentRoot);
     final openEIdx = Note.noteIndex('E');
     int baseFret = (rootIdx - openEIdx) % 12;
-    if (baseFret == 0) baseFret = 12; // Open E maps to fret 12 for clarity
+    if (baseFret == 0) baseFret = 12;
 
-    // Shift by position (approximate 2-3 frets per position)
     final shift = _selectedPosition * 3;
     return (baseFret + shift) % 12;
+  }
+
+  void _changeRoot(String newRoot) {
+    setState(() {
+      _currentRoot = newRoot;
+      // All form positions recalculate automatically via _startFretForRoot()
+    });
+  }
+
+  void _changeType(String newType) {
+    setState(() {
+      _currentType = newType;
+      // Reset position if current exceeds available positions
+      if (_selectedPosition >= _patterns.length) {
+        _selectedPosition = 0;
+      }
+    });
   }
 
   @override
@@ -61,7 +85,7 @@ class _BoxPatternScreenState extends State<BoxPatternScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${nn.display(widget.rootNote)} $_title'),
+        title: Text('${nn.display(_currentRoot)} $_title'),
         actions: [
           IconButton(
             icon: Icon(_showNoteNames ? Icons.abc : Icons.music_note),
@@ -72,9 +96,95 @@ class _BoxPatternScreenState extends State<BoxPatternScreen> {
       ),
       body: Column(
         children: [
-          // Position selector
+          // ── Key (Root Note) selector ──
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('Key: ',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700])),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: Note.allNotes.map((note) {
+                            final isSelected = _currentRoot == note;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: ChoiceChip(
+                                label: Text(nn.display(note),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          isSelected ? Colors.white : null,
+                                    )),
+                                selected: isSelected,
+                                selectedColor: Colors.red[700],
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) => _changeRoot(note),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Pattern type toggle
+                Row(
+                  children: [
+                    Text('Type: ',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700])),
+                    const SizedBox(width: 4),
+                    ChoiceChip(
+                      label: const Text('Pentatonic',
+                          style: TextStyle(fontSize: 12)),
+                      selected: _currentType == 'pentatonic',
+                      selectedColor: accent,
+                      labelStyle: TextStyle(
+                        color: _currentType == 'pentatonic'
+                            ? Colors.white
+                            : null,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => _changeType('pentatonic'),
+                    ),
+                    const SizedBox(width: 6),
+                    ChoiceChip(
+                      label: const Text('Major Scale',
+                          style: TextStyle(fontSize: 12)),
+                      selected: _currentType == 'major',
+                      selectedColor: accent,
+                      labelStyle: TextStyle(
+                        color:
+                            _currentType == 'major' ? Colors.white : null,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => _changeType('major'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Position selector (forms)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -103,7 +213,7 @@ class _BoxPatternScreenState extends State<BoxPatternScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
-              'Root: ${nn.display(widget.rootNote)}  |  Start Fret: $startFret',
+              'Root: ${nn.display(_currentRoot)}  |  Start Fret: $startFret  |  ${pattern.name}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ),
@@ -154,7 +264,7 @@ class _BoxPatternScreenState extends State<BoxPatternScreen> {
           endFret: displayEnd,
           pattern: pattern,
           patternStartFret: startFret,
-          rootNote: widget.rootNote,
+          rootNote: _currentRoot,
           showNames: _showNoteNames,
           isDark: isDark,
           cellW: cellW,
