@@ -173,6 +173,13 @@ class _FirstLaunchWrapperState extends State<_FirstLaunchWrapper> {
         );
       }
     }
+
+    // Show notification consent dialog after a short delay
+    // (after tutorial or on second launch if tutorial was shown)
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) {
+      await NotificationService().showConsentDialog(context);
+    }
   }
 
   @override

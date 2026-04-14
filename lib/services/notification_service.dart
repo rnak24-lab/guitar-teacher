@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:permission_handler/permission_handler.dart';
 import 'app_localizations.dart';
 import 'practice_record.dart';
 
@@ -33,6 +35,7 @@ class NotificationService {
   static const _keyStreakEnabled = 'streak_notif_enabled';
   static const _keyComebackEnabled = 'comeback_notif_enabled';
   static const _keyLastOpenDate = 'last_app_open_date';
+  static const _keyPermissionAsked = 'notification_permission_asked';
 
   // ── Localized messages ──
 
@@ -304,5 +307,76 @@ class NotificationService {
       streak: prefs.getBool(_keyStreakEnabled) ?? true,
       comeback: prefs.getBool(_keyComebackEnabled) ?? true,
     );
+  }
+
+  // ── Permission Request (Android 13+) ──
+
+  /// Check if we already asked for notification permission.
+  Future<bool> wasPermissionAsked() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyPermissionAsked) ?? false;
+  }
+
+  /// Request notification permission. Returns true if granted.
+  Future<bool> requestPermission() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPermissionAsked, true);
+
+    final status = await Permission.notification.request();
+    return status.isGranted;
+  }
+
+  /// Show the first-launch notification consent dialog.
+  /// Returns true if user accepted; false if declined.
+  /// Automatically requests OS-level permission if accepted.
+  Future<bool> showConsentDialog(BuildContext context) async {
+    // Already asked? Skip.
+    if (await wasPermissionAsked()) return true;
+
+    final loc = AppLocalizations();
+    final title = loc.t('notif_consent_title');
+    final body = loc.t('notif_consent_body');
+    final accept = loc.t('notif_consent_accept');
+    final decline = loc.t('notif_consent_decline');
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.notifications_active, size: 48, color: Color(0xFF8B6914)),
+        title: Text(title, textAlign: TextAlign.center),
+        content: Text(body, textAlign: TextAlign.center),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(decline),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B6914),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(accept),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      final granted = await requestPermission();
+      if (granted) {
+        // Auto-enable daily reminder at 20:00 as sensible default
+        await setReminder(enabled: true, hour: 20, minute: 0);
+      }
+      return granted;
+    } else {
+      // User declined — mark as asked so we don't show again
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyPermissionAsked, true);
+      return false;
+    }
   }
 }
